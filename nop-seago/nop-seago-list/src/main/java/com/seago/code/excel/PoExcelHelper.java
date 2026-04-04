@@ -56,19 +56,6 @@ public class PoExcelHelper {
         return list;
     }
 
-    private static String toStdDomain(String type) {
-        if (type == null) return "string";
-        switch (type) {
-            case "int": case "integer": return "int";
-            case "long": return "long";
-            case "double": case "float": case "decimal": case "number": return "double";
-            case "boolean": return "boolean";
-            case "date": return "date";
-            case "datetime": case "timestamp": return "datetime";
-            default: return "string";
-        }
-    }
-
     public static XNode buildImportModelNode(PoConfig poConfig) {
         try {
             IResource xgenResource = VirtualFileSystem.instance().getResource("/nop/excel/po-to-imp.imp.xml.xgen");
@@ -103,9 +90,7 @@ public class PoExcelHelper {
             XNode workbookNode = (XNode) XLang.parseXpl(xgenResource, XLangOutputMode.node).invoke(evalScope);
             
             // 解析为 ExcelWorkbook 对象
-            ExcelWorkbook workbook = (ExcelWorkbook) DslModelHelper.parseDslNode("/nop/schema/excel/workbook.xdef", workbookNode);
-
-            return workbook;
+            return (ExcelWorkbook) DslModelHelper.parseDslNode("/nop/schema/excel/workbook.xdef", workbookNode);
         } catch (Exception e) {
             throw NopException.adapt(e);
         }
@@ -118,20 +103,6 @@ public class PoExcelHelper {
         return file;
     }
 
-    public static String getColLetter(int colIndex) {
-        StringBuilder sb = new StringBuilder();
-        int n = colIndex;
-        while (n >= 0) {
-            sb.insert(0, (char) ('A' + (n % 26)));
-            n = n / 26 - 1;
-        }
-        return sb.toString();
-    }
-
-    public static Object getPropertyValue(Object row, String propName) {
-        if (row == null) return null;
-        return BeanTool.getProperty(row, propName);
-    }
 
     public static String getDictLabel(String dictName, Object value) {
         if (value == null) return null;

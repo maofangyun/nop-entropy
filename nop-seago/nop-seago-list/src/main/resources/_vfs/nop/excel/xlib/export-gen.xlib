@@ -11,6 +11,7 @@
                     import java.util.ArrayList;
                     import java.util.Collections;
                     import java.util.LinkedHashMap;
+                    import io.nop.core.reflect.bean.BeanTool;
                     import com.seago.code.excel.PoExcelHelper;
 
                     const isNotBlank = (str) => {
@@ -191,7 +192,7 @@
                         for (let item of data) {
                             const row = new ArrayList();
                             for (let prop of props) {
-                                let value = PoExcelHelper.getPropertyValue(item, prop.name);
+                                let value = BeanTool.getProperty(item, prop.name);
                                 if (isNotBlank(prop.dict)) {
                                     value = PoExcelHelper.getDictLabel(prop.dict, value);
                                 }
