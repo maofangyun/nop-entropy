@@ -91,17 +91,30 @@
                             name: prop.name,
                             displayName: leafDisplayName,
                             stdDomain: toStdDomain(prop.type),
-                            dict: prop.dict,
-                            groupField: groupName
+                            groupField: groupName,
+                            mandatory: prop.mandatory,
+                            pattern: prop.pattern,
+                            min: prop.min,
+                            max: prop.max,
+                            precision: prop.precision,
+                            scale: prop.scale,
+                            minLength: prop.minLength,
+                            maxLength: prop.maxLength,
+                            dict: prop.dict
                         });
                     }
                 ]]></c:script>
                 <sheet name="${po.comment != null ? po.comment : 'Sheet1'}"
-                       field="${po.name}">
+                       field="${po.name}" list="true">
                     <fields>
                         <c:for var="fieldMeta" items="${fieldMetas}">
-                            <field name="${fieldMeta.name}" displayName="${fieldMeta.displayName}" groupField="${fieldMeta.groupField}">
-                                <schema stdDomain="${fieldMeta.stdDomain}" dict="${fieldMeta.dict}"/>
+                            <field name="${fieldMeta.name}" displayName="${fieldMeta.displayName}" groupField="${fieldMeta.groupField}"
+                                   mandatory="${fieldMeta.mandatory}" importDictLabel="${fieldMeta.dict != null}">
+                                <schema stdDomain="${fieldMeta.stdDomain}"
+                                        pattern="${fieldMeta.pattern}" min="${fieldMeta.min}" max="${fieldMeta.max}"
+                                        precision="${fieldMeta.precision}" scale="${fieldMeta.scale}"
+                                        minLength="${fieldMeta.minLength}" maxLength="${fieldMeta.maxLength}"
+                                        dict="${fieldMeta.dict}"/>
                             </field>
                         </c:for>
                         <c:for var="groupField" items="${groupFields.values()}">

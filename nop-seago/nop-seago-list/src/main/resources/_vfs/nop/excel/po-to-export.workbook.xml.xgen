@@ -4,7 +4,5 @@
     <c:import from="/nop/excel/xlib/export-gen.xlib"/>
 
     <export-gen:GenWorkbook po="${po}"
-                             data="${data}"
-                             dictOptions="${dictOptions}"
-                             listOptions="${listOptions}"/>
+                             data="${data}"/>
 </c:unit>

@@ -23,7 +23,7 @@
                         <field name="genderGroup" displayName="性别">
                             <fields>
                                 <field name="gender" displayName="性别">
-                                    <schema stdDomain="string" dict="sys/gender_dict"/>
+                                    <schema stdDomain="string"/>
                                 </field>
                             </fields>
                         </field>

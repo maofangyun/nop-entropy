@@ -18,6 +18,7 @@ import io.nop.excel.model.ExcelFill;
 import io.nop.excel.model.ExcelFont;
 import io.nop.excel.model.ExcelStyle;
 import io.nop.excel.model.constants.ExcelFontFamily;
+import io.nop.excel.model.constants.ExcelLineStyle;
 import io.nop.ooxml.common.IOfficePackagePart;
 
 import java.util.ArrayList;
@@ -70,12 +71,15 @@ public class StylesPart implements IOfficePackagePart {
         fills.add(new ExcelFill("gray125"));
 
         List<ExcelFont> fonts = new ArrayList<>();
+        fonts.add(ExcelFont.DEFAULT_FONT);
 
         List<ExcelBorder> borders = new ArrayList<>();
+        borders.add(new ExcelBorder());
 
         int customIndex = 170;
 
         XNode fontsN = XNode.make("fonts");
+        fontsN.appendChild(toFontNode(ExcelFont.DEFAULT_FONT));
 
         XNode cellXfs = XNode.make("cellXfs");
 
@@ -83,42 +87,50 @@ public class StylesPart implements IOfficePackagePart {
             XNode styleN = XNode.make("xf");
             cellXfs.appendChild(styleN);
 
+            int numFmtId = 0;
             if (!StringHelper.isEmpty(style.getNumberFormat())) {
-                int index = BuiltinFormats.getBuiltinFormat(style.getNumberFormat());
-                if (index < 0) {
+                numFmtId = BuiltinFormats.getBuiltinFormat(style.getNumberFormat());
+                if (numFmtId < 0) {
                     if (!numberFormats.containsKey(style.getNumberFormat())) {
                         int fmtIndex = customIndex++;
                         numberFormats.put(style.getNumberFormat(), fmtIndex);
                     }
-                    index = numberFormats.get(style.getNumberFormat());
+                    numFmtId = numberFormats.get(style.getNumberFormat());
                 }
-                styleN.setAttr("numFmtId", index);
             }
+            styleN.setAttr("numFmtId", numFmtId);
 
             ExcelFont font = style.getFont();
+            int fontId = 0;
             if (font != null) {
-                int index = makeFont(fonts, font, fontsN);
-                styleN.setAttr("fontId", index);
+                fontId = makeFont(fonts, font, fontsN);
             }
+            styleN.setAttr("fontId", fontId);
 
+            int fillId = 0;
             if (style.getFillPattern() != null) {
                 ExcelFill fill = new ExcelFill();
                 fill.setPatternType(style.getFillPattern());
                 fill.setBgColor(style.getFillBgColor());
                 fill.setFgColor(style.getFillFgColor());
-                int index = fills.indexOf(fill);
-                if (index < 0) {
-                    index = fills.size();
+                fillId = fills.indexOf(fill);
+                if (fillId < 0) {
+                    fillId = fills.size();
                     fills.add(fill);
                 }
-                styleN.setAttr("fillId", index);
             }
+            styleN.setAttr("fillId", fillId);
 
             ExcelBorder border = style.getBorder();
+            int borderId = 0;
             if (border != null) {
-                borders.add(border);
-                styleN.setAttr("borderId", borders.size() - 1);
+                borderId = borders.indexOf(border);
+                if (borderId < 0) {
+                    borderId = borders.size();
+                    borders.add(border);
+                }
             }
+            styleN.setAttr("borderId", borderId);
 
             styleN.setAttr("xfId", "0");
 
@@ -152,10 +164,6 @@ public class StylesPart implements IOfficePackagePart {
             if (style.getIndent() != null) {
                 styleN.makeChild("alignment").setAttr("indent", style.getIndent());
             }
-        }
-
-        if (!fontsN.hasChild()) {
-            addDefaultFont(fontsN);
         }
 
         addNumberFormats(node, numberFormats);
@@ -241,13 +249,24 @@ public class StylesPart implements IOfficePackagePart {
             patternFillN.setAttr("patternType", fill.getPatternType());
 
             if (fill.getFgColor() != null) {
-                patternFillN.addChild("fgColor").setAttr("rgb", fill.getFgColor());
+                patternFillN.addChild("fgColor").setAttr("rgb", normalizeColor(fill.getFgColor()));
             }
 
             if (fill.getBgColor() != null) {
-                patternFillN.addChild("bgColor").setAttr("rgb", fill.getBgColor());
+                patternFillN.addChild("bgColor").setAttr("rgb", normalizeColor(fill.getBgColor()));
             }
         }
+    }
+
+    private String normalizeColor(String color) {
+        if (color == null)
+            return null;
+        if (color.startsWith("0x"))
+            color = color.substring(2);
+        if (color.length() == 6) {
+            return "FF" + color.toUpperCase();
+        }
+        return color.toUpperCase();
     }
 
     private void addBorders(XNode node, List<ExcelBorder> borders) {
@@ -335,30 +354,21 @@ public class StylesPart implements IOfficePackagePart {
 
     private XNode toBorderNode(ExcelBorder border) {
         XNode ret = XNode.make("border");
-        if (border.getLeftBorder() != null) {
-            ret.appendChild(toBorderStyle("left", border.getLeftBorder()));
-        }
-        if (border.getRightBorder() != null) {
-            ret.appendChild(toBorderStyle("right", border.getRightBorder()));
-        }
-
-        if (border.getTopBorder() != null) {
-            ret.appendChild(toBorderStyle("top", border.getTopBorder()));
-        }
-
-        if (border.getBottomBorder() != null) {
-            ret.appendChild(toBorderStyle("bottom", border.getBottomBorder()));
-        }
+        ret.appendChild(toBorderStyle("left", border.getLeftBorder()));
+        ret.appendChild(toBorderStyle("right", border.getRightBorder()));
+        ret.appendChild(toBorderStyle("top", border.getTopBorder()));
+        ret.appendChild(toBorderStyle("bottom", border.getBottomBorder()));
+        ret.appendChild(toBorderStyle("diagonal", border.getDiagonalLeftBorder()));
         return ret;
     }
 
-    private XNode toBorderStyle(String name, ExcelBorderStyle borderStyle) {
+    private XNode toBorderStyle(String name, ExcelBorderStyle style) {
         XNode node = XNode.make(name);
-        if (borderStyle.getType() != null) {
-            node.setAttr("style", borderStyle.getType().getExcelText());
-        }
-        if (borderStyle.getColor() != null) {
-            node.addChild("color").setAttr("rgb", borderStyle.getColor());
+        if (style != null && style.getType() != null && style.getType() != ExcelLineStyle.NONE) {
+            node.setAttr("style", style.getType().getExcelText());
+            if (style.getColor() != null) {
+                node.addChild("color").setAttr("rgb", normalizeColor(style.getColor()));
+            }
         }
         return node;
     }
@@ -375,7 +385,10 @@ public class StylesPart implements IOfficePackagePart {
 
     private XNode toFontNode(ExcelFont font) {
         XNode node = XNode.make("font");
-        node.addChild("name").setAttr("val", font.getFontName());
+        String fontName = font.getFontName();
+        if (fontName == null)
+            fontName = "Calibri";
+        node.addChild("name").setAttr("val", fontName);
 
         if (font.isBold()) {
             node.addChild("b");
@@ -422,7 +435,7 @@ public class StylesPart implements IOfficePackagePart {
         }
 
         if (font.getFontColor() != null) {
-            node.addChild("color").setAttr("rgb", font.getFontColor());
+            node.addChild("color").setAttr("rgb", normalizeColor(font.getFontColor()));
         }
         return node;
     }

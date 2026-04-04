@@ -11,9 +11,13 @@
             iteration="string" branch="string" master="string"
             attr="string" attrView="string" xdef:name="PoInfo">
             <props xdef:body-type="list">
-                <prop name="!string" type="!string" comment="string" length="int" 
-                      excelHeader="string" excelWidth="int" dict="string" 
-                      listProvider="string" hidden="boolean" xdef:name="PropInfo"/>
+                <prop name="!string" type="!string" comment="string" length="int"
+                      excelHeader="string" excelWidth="int"
+                      hidden="boolean" mandatory="boolean"
+                      pattern="regex" min="double" max="double" precision="int" scale="int"
+                      minLength="int" maxLength="int"
+                      dict="string"
+                      xdef:name="PropInfo"/>
             </props>
         </po>
     </pos>

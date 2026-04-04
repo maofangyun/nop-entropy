@@ -5,8 +5,6 @@
         <GenWorkbook outputMode="xml">
             <attr name="po"/>
             <attr name="data"/>
-            <attr name="dictOptions"/>
-            <attr name="listOptions"/>
             <source>
                 <c:script><![CDATA[
                     import java.lang.Boolean;
@@ -185,72 +183,6 @@
                         return headerRows;
                     };
 
-                    const getOptionValues = (optionsMap, key) => {
-                        if (optionsMap == null || !isNotBlank(key)) {
-                            return null;
-                        }
-                        return optionsMap.get(key);
-                    };
-
-                    const buildOptionSheetName = (prop) => {
-                        if (isNotBlank(prop.listProvider)) {
-                            return prop.name + 'List';
-                        }
-                        if (isNotBlank(prop.dict)) {
-                            return prop.dict + 'Options';
-                        }
-                        return null;
-                    };
-
-                    const buildOptionSheets = (props, dictOptions, listOptions) => {
-                        const sheetMap = new LinkedHashMap();
-                        for (let prop of props) {
-                            let values = null;
-                            if (isNotBlank(prop.dict)) {
-                                values = getOptionValues(dictOptions, prop.dict);
-                            } else if (isNotBlank(prop.listProvider)) {
-                                values = getOptionValues(listOptions, prop.listProvider);
-                            }
-                            if (values == null || values.isEmpty()) {
-                                continue;
-                            }
-
-                            const sheetName = buildOptionSheetName(prop);
-                            if (!sheetMap.containsKey(sheetName)) {
-                                sheetMap.put(sheetName, {
-                                    name: sheetName,
-                                    values: values
-                                });
-                            }
-                        }
-                        return new ArrayList(sheetMap.values());
-                    };
-
-                    const buildValidations = (props, headerRowCount, dictOptions, listOptions) => {
-                        const validations = new ArrayList();
-                        const dataStartRow = headerRowCount + 1;
-                        for (let i = 0; i < props.size(); i++) {
-                            const prop = props.get(i);
-                            let formula1 = null;
-                            if (isNotBlank(prop.listProvider)) {
-                                const options = getOptionValues(listOptions, prop.listProvider);
-                                formula1 = options != null && !options.isEmpty() ? '=' + prop.name + 'List!$A:$A' : '""';
-                            } else if (isNotBlank(prop.dict)) {
-                                const options = getOptionValues(dictOptions, prop.dict);
-                                formula1 = options != null && !options.isEmpty() ? '=' + prop.dict + 'Options!$A:$A' : '""';
-                            }
-
-                            if (formula1 != null) {
-                                const colLetter = PoExcelHelper.getColLetter(i);
-                                validations.add({
-                                    sqref: colLetter + dataStartRow + ':' + colLetter + '1048576',
-                                    formula1: formula1
-                                });
-                            }
-                        }
-                        return validations;
-                    };
-
                     const buildDataRows = (data, props) => {
                         const rows = new ArrayList();
                         if (data == null) {
@@ -259,7 +191,11 @@
                         for (let item of data) {
                             const row = new ArrayList();
                             for (let prop of props) {
-                                row.add(PoExcelHelper.getPropertyValue(item, prop.name));
+                                let value = PoExcelHelper.getPropertyValue(item, prop.name);
+                                if (isNotBlank(prop.dict)) {
+                                    value = PoExcelHelper.getDictLabel(prop.dict, value);
+                                }
+                                row.add(value);
                             }
                             rows.add(row);
                         }
@@ -269,8 +205,6 @@
                     const visibleProps = getVisibleProps(po.props);
                     const headerRowCount = calculateHeaderRowCount(visibleProps);
                     const headerRows = buildHeaderRows(visibleProps, headerRowCount);
-                    const optionSheets = buildOptionSheets(visibleProps, dictOptions, listOptions);
-                    const validations = buildValidations(visibleProps, headerRowCount, dictOptions, listOptions);
                     const dataRows = buildDataRows(data, visibleProps);
                 ]]></c:script>
                 <workbook x:schema="/nop/schema/excel/workbook.xdef"
@@ -291,26 +225,6 @@
                         </style>
                     </styles>
                     <sheets>
-                        <c:for var="optionSheet" items="${optionSheets}">
-                            <sheet name="${optionSheet.name}">
-                                <table>
-                                    <rows>
-                                        <c:for var="optionValue" items="${optionSheet.values}">
-                                            <row>
-                                                <cells>
-                                                    <cell styleId="data">
-                                                        <c:if test="${optionValue != null}">
-                                                            <value>${optionValue}</value>
-                                                        </c:if>
-                                                    </cell>
-                                                </cells>
-                                            </row>
-                                        </c:for>
-                                    </rows>
-                                </table>
-                            </sheet>
-                        </c:for>
-
                         <sheet name="${po.name != null ? po.name : 'Sheet1'}">
                             <table>
                                 <rows>
@@ -330,13 +244,16 @@
                                         </row>
                                     </c:for>
 
-                                    <c:for var="dataRow" items="${dataRows}">
+                                    <c:for var="dataRow" index="rowIdx" items="${dataRows}">
                                         <row>
                                             <cells>
-                                                <c:for var="cellValue" items="${dataRow}">
+                                                <c:for var="cellValue" index="colIdx" items="${dataRow}">
                                                     <cell styleId="data">
                                                         <c:if test="${cellValue != null}">
                                                             <value>${cellValue}</value>
+                                                        </c:if>
+                                                        <c:if test="${isNotBlank(visibleProps.get(colIdx).dict)}">
+                                                            <model dict="${visibleProps.get(colIdx).dict}"/>
                                                         </c:if>
                                                     </cell>
                                                 </c:for>
@@ -345,14 +262,6 @@
                                     </c:for>
                                 </rows>
                             </table>
-
-                            <dataValidations>
-                                <c:for var="validation" items="${validations}">
-                                    <dataValidation sqref="${validation.sqref}" type="list">
-                                        <formula1>${validation.formula1}</formula1>
-                                    </dataValidation>
-                                </c:for>
-                            </dataValidations>
                         </sheet>
                     </sheets>
                 </workbook>
