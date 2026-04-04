@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<c:unit xpl:outputMode="node">
+    <c:import from="/nop/excel/xlib/export-gen.xlib"/>
+
+    <export-gen:GenWorkbook po="${po}"
+                             data="${data}"
+                             dictOptions="${dictOptions}"
+                             listOptions="${listOptions}"/>
+</c:unit>

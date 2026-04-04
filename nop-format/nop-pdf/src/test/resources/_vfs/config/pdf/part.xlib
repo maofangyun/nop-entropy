@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lib x:schema="/nop/schema/xlib.xdef" xmlns:x="/nop/schema/xdsl.xdef" xmlns:c="c">
+    <tags>
+        <GenPartDataRows outputMode="node">
+            <attr name="partData" type="Map" mandatory="true">
+                <description>安装托盘表数据集合</description>
+            </attr>
+            <source>
+                <c:for var="entry" items="${partData.entrySet()}">
+                    <row height="25">
+                        <cells>
+                            <cell text="${entry.key}" colSpan="40" className="table-cell-center"/>
+                            <c:for var="item" items="${entry.value}" index="index">
+                                <cell text="${index+1}" colSpan="1" className="table-cell-center"/>
+                                <cell text="${item.assemCode}" colSpan="4" className="table-cell-center"/>
+                                <cell text="${item.partName}" colSpan="3" className="table-cell-center" xpl:if = "item.source != null"/>
+                                <cell text="${item.materialName}" colSpan="3" className="table-cell-center" xpl:if = "item.source == null"/>
+                                <cell text="${item.materialSpec}" colSpan="3" className="table-cell-center"/>
+                                <cell text="${item.materialModel}" colSpan="3" className="table-cell-center"/>
+                                <cell text="${item.materialTexture}" colSpan="2" className="table-cell-center"/>
+                                <cell text="${item.amount}" colSpan="2" className="table-cell-center"/>
+                                <cell text="${item.defaultUnitName}" colSpan="2" className="table-cell-center"/>
+                                <cell text="${item.weight}" colSpan="2" className="table-cell-center"/>
+                                <cell text="${item.paintingArea}" colSpan="2" className="table-cell-center"/>
+                                <cell text="${item.paintingCode}" colSpan="2" className="table-cell-center"/>
+                                <cell text="${item.porNumber}" colSpan="7" className="table-cell-center"/>
+                                <cell text="${item.source}" colSpan="2" className="table-cell-center"/>
+                                <cell text="${item.workType}" colSpan="2" className="table-cell-center"/>
+                                <cell text="${item.note}" colSpan="3" className="table-cell-center"/>
+                            </c:for>
+                        </cells>
+                    </row>
+                </c:for>
+            </source>
+        </GenPartDataRows>
+    </tags>
+</lib>

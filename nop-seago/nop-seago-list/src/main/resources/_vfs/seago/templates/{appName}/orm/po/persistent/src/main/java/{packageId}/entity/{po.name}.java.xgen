@@ -1,0 +1,49 @@
+<c:unit xpl:outputMode="text">
+
+package ${packageName}.entity;
+import ${packageName}.entity._gen._${po.name};
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+<c:if test="${po.indexes != null}">
+import jakarta.persistence.Index;
+</c:if>
+import com.seago.vc.anno.Iteration;
+import com.seago.vc.anno.Master;
+import com.seago.vc.anno.Version;
+import com.seago.vc.anno.AttributeView;
+import com.seago.vc.anno.PdmAttributeClass;
+import org.hibernate.annotations.Comment;
+<c:if test="${po.isAbstract()}">
+import jakarta.persistence.MappedSuperclass;
+
+@MappedSuperclass
+</c:if>
+
+<c:if test="${!po.isAbstract()}">
+@Entity
+    <c:if test="${po.iteration != null}">
+@Iteration(${po.iteration}.class)
+    </c:if>
+    <c:if test="${po.master != null}">
+@Master(${po.master}.class)
+@Version(${po.branch}.class)
+    </c:if>
+    <c:if test="${po.attr != null}">
+@PdmAttributeClass(cls = ${po.attr}.class, isJson = true)
+@AttributeView(name = "${po.attrView}")
+    </c:if>
+@Table(name = "${po.tableName}"
+    <c:if test="${po.indexes != null}">
+        <c:script> let ps = po.indexes.split(",") </c:script>
+        ,indexes={
+        <c:for var="p" items="${ps}">
+            @Index(columnList = "${p}"),
+        </c:for>
+        }
+    </c:if>
+    )
+@Comment("${po.comment}")
+</c:if>
+public class ${po.name} extends _${po.name}{
+}
+</c:unit>

@@ -1,0 +1,11 @@
+<gen:DefineLoop xpl:lib="/nop/codegen/xlib/gen.xlib" xpl:slotScope="builder">
+    <c:script><![CDATA[
+        let poModel = codeGenModel;
+        let packageName = poModel.packageName;
+        let packageId = packageName.replace('.','/');
+        builder.defineGlobalVar("packageId",packageId);
+        builder.defineGlobalVar("packageName",packageName);
+        builder.defineGlobalVar("poModel",poModel);
+        builder.defineLoopVar("po", "poModel", model => model.pos);
+    ]]></c:script>
+</gen:DefineLoop>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PDF 基础模板 - 包含完整的销售报告结构和样式定义 -->
+<pdf x:schema="/nop/schema/pdf.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef"
+     id="sales-report-base"
+     title="${title}"
+     author="${author}"
+     subject="销售报告"
+     creator="Nop PDF Generator"
+     producer="Nop Platform"
+     pageSize="A4"
+     pageOrientation="portrait"
+     marginTop="30"
+     marginBottom="30"
+     marginLeft="25"
+     marginRight="25"
+     encoding="UTF-8">
+
+    <description>销售报告基础模板</description>
+
+    <metadata creationDate="${date}" modificationDate="${date}" compressed="true" encrypted="false"/>
+
+    <!-- 样式定义 -->
+    <styles>
+        <styleRefs>
+            <styleRef path="/config/pdf/sales-report-styles.xml"/>
+        </styleRefs>
+    </styles>
+
+    <!-- 页面定义 -->
+    <pages>
+        <page id="page-1">
+            <header className="page-header">
+                <content>${title} - ${date}</content>
+            </header>
+
+            <footer id="footer-para" className="page-footer">
+                <content>第 ${pageNumber} / ${totalPages} 页</content>
+            </footer>
+
+            <content>
+                <!-- 标题 -->
+                <paragraph id="title-para" className="title">
+                    <text>${title}</text>
+                </paragraph>
+
+                <!-- 基本信息 -->
+                <paragraph id="dept-para" className="body-text">
+                    <text>部门: ${department}</text>
+                </paragraph>
+
+                <paragraph id="quarter-para" className="body-text">
+                    <text>季度: ${quarter}</text>
+                </paragraph>
+
+                <paragraph id="date-para" className="body-text">
+                    <text>生成日期: ${date}</text>
+                </paragraph>
+
+                <!-- 关键指标表格 -->
+                <table id="sales-table" className="table">
+                    <columns>
+                        <column index="0" width="25%"/>
+                        <column index="1" width="25%"/>
+                        <column index="2" width="25%"/>
+                        <column index="3" width="25%"/>
+                    </columns>
+
+                    <header>
+                        <!-- 表头行 -->
+                        <row height="30">
+                            <cells>
+                                <cell text="指标项目" colSpan="1" className="table-header-cell"/>
+                                <cell text="实现值" colSpan="1" className="table-header-cell"/>
+                                <cell text="目标值" colSpan="1" className="table-header-cell"/>
+                                <cell text="达成率" colSpan="1" className="table-header-cell"/>
+                            </cells>
+                        </row>
+                    </header>
+                    <rows>
+
+                        <!-- 数据行 -->
+                        <row>
+                            <cells>
+                                <cell text="销售总额" className="table-cell"/>
+                                <cell text="${totalSales}" className="table-cell-number"/>
+                                <cell text="${targetSales}" className="table-cell-number"/>
+                                <cell text="${achievement}" className="table-cell-center"/>
+                            </cells>
+                        </row>
+
+                        <row>
+                            <cells>
+                                <cell text="新增客户" className="table-cell"/>
+                                <cell text="45" className="table-cell-number"/>
+                                <cell text="40" className="table-cell-number"/>
+                                <cell text="112.5%" className="table-cell-center"/>
+                            </cells>
+                        </row>
+
+                        <row>
+                            <cells>
+                                <cell text="客户满意度" className="table-cell"/>
+                                <cell text="96%" className="table-cell-center"/>
+                                <cell text="90%" className="table-cell-center"/>
+                                <cell text="106.7%" className="table-cell-center"/>
+                            </cells>
+                        </row>
+
+                        <!-- 表尾行 -->
+                        <row>
+                            <cells>
+                                <cell text="总计" colSpan="1" className="table-footer-cell"/>
+                                <cell text="${totalSales}" className="table-footer-cell"/>
+                                <cell text="${targetSales}" className="table-footer-cell"/>
+                                <cell text="${achievement}" className="table-footer-cell"/>
+                            </cells>
+                        </row>
+                    </rows>
+                </table>
+
+                <!-- 详细数据分析 -->
+                <paragraph id="analysis-title" className="subtitle">
+                    <text>详细数据分析</text>
+                </paragraph>
+
+                <paragraph id="analysis-content" className="body-text" spaceAfter="15">
+                    <text>本季度销售业绩表现优异，各项指标均超出预期目标。</text>
+                </paragraph>
+
+            </content>
+        </page>
+    </pages>
+
+</pdf>

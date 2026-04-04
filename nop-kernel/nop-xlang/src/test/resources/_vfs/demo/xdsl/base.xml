@@ -1,0 +1,16 @@
+<my-config>
+    <!-- 我们将用 <x:super> 来截获并包装它 -->
+    <wrapperNode x:id="wrap1">
+        <baseChild>I am the original base child</baseChild>
+    </wrapperNode>
+
+    <!-- 我们将用 x:key-attr 来根据 myKey 匹配它，而不是默认的 x:id -->
+    <someNode myKey="bizX">
+        <baseData>Data from base</baseData>
+    </someNode>
+
+    <!-- 这是一个排在最后的节点，我们将用 x:before 和 x:after 强行插队到它前后 -->
+    <sysNode x:id="sys1">
+        <label>System Base Node</label>
+    </sysNode>
+</my-config>

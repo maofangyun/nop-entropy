@@ -1,0 +1,31 @@
+<c:unit xpl:outputMode="text">
+package ${packageName}.entity.content._gen;
+
+import jakarta.persistence.Column;
+import org.hibernate.annotations.Comment;
+import jakarta.persistence.MappedSuperclass;
+<c:if test="${po.extends.indexOf('seago') == -1}">
+import ${packageName}.entity.content.${po.extends};
+</c:if>
+
+@MappedSuperclass
+public class _${po.name} extends ${po.extends}{
+<c:if test="${po.props != null}">
+    <c:for var="prop" items="${po.props}">
+        <c:if test="${prop.length != null}">
+        @Column(length = ${prop.length})
+        </c:if>
+        @Comment("${prop.comment}")
+        private ${prop.type} ${prop.name};
+
+        public ${prop.type} ${prop.name.$methodGet()}(){
+            return ${prop.name};
+        }
+
+        public void ${prop.name.$methodSet()}(${prop.type} ${prop.name}){
+            this.${prop.name} = ${prop.name};
+        }
+    </c:for>
+</c:if>
+}
+</c:unit>

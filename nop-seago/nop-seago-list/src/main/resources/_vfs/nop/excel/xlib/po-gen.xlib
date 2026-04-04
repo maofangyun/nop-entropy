@@ -1,0 +1,117 @@
+<lib x:schema="/nop/schema/xlib.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef" xmlns:thisLib="thisLib" xmlns:c="c" xmlns:xpl="xpl">
+
+    <tags>
+        <GenSheetConfig outputMode="xml">
+            <attr name="po"/>
+            <source>
+                <c:script><![CDATA[
+                    import java.lang.Boolean;
+                    import java.util.ArrayList;
+                    import java.util.LinkedHashMap;
+
+                    const getVisibleProps = (props) => {
+                        if (props == null) return [];
+                        return props.filter(prop => prop != null && !Boolean.TRUE.equals(prop.hidden));
+                    };
+
+                    const isNotBlank = (str) => {
+                        return str != null && str.trim().length() > 0;
+                    };
+
+                    const toStdDomain = (type) => {
+                        if (type == null) return 'string';
+                        if (type == 'int' || type == 'integer') return 'int';
+                        if (type == 'long') return 'long';
+                        if (type == 'double' || type == 'float' || type == 'decimal' || type == 'number') return 'double';
+                        if (type == 'boolean') return 'boolean';
+                        if (type == 'date') return 'date';
+                        if (type == 'datetime' || type == 'timestamp') return 'datetime';
+                        return 'string';
+                    };
+
+                    const splitHeaderParts = (prop) => {
+                        const parts = new ArrayList();
+                        if (isNotBlank(prop.excelHeader)) {
+                            for (let part of prop.excelHeader.split('/')) {
+                                if (isNotBlank(part)) {
+                                    parts.add(part.trim());
+                                }
+                            }
+                        }
+                        if (parts.isEmpty()) {
+                            if (isNotBlank(prop.comment)) {
+                                parts.add(prop.comment.trim());
+                            } else {
+                                parts.add(prop.name);
+                            }
+                        }
+                        return parts;
+                    };
+
+                    const buildGroupDisplayName = (parts) => {
+                        if (parts.size() <= 1) {
+                            return null;
+                        }
+                        const labels = new ArrayList();
+                        for (let i = 0; i < parts.size() - 1; i++) {
+                            labels.add(parts.get(i));
+                        }
+                        return labels.join('/');
+                    };
+
+                    const buildLeafDisplayName = (parts) => {
+                        return parts.get(parts.size() - 1);
+                    };
+
+                    const sanitizeGroupName = (name) => {
+                        return '__group__' + name.replaceAll('[^A-Za-z0-9_]', '_');
+                    };
+
+                    const visibleProps = getVisibleProps(po.props);
+                    const groupFields = new LinkedHashMap();
+                    const fieldMetas = new ArrayList();
+
+                    for (let prop of visibleProps) {
+                        const parts = splitHeaderParts(prop);
+                        const leafDisplayName = buildLeafDisplayName(parts);
+                        const groupDisplayName = buildGroupDisplayName(parts);
+                        let groupName = null;
+                        if (isNotBlank(groupDisplayName)) {
+                            groupName = sanitizeGroupName(groupDisplayName);
+                            if (!groupFields.containsKey(groupName)) {
+                                groupFields.put(groupName, {
+                                    name: groupName,
+                                    displayName: groupDisplayName
+                                });
+                            }
+                        }
+
+                        fieldMetas.add({
+                            name: prop.name,
+                            displayName: leafDisplayName,
+                            stdDomain: toStdDomain(prop.type),
+                            dict: prop.dict,
+                            groupField: groupName
+                        });
+                    }
+                ]]></c:script>
+                <sheet name="${po.comment != null ? po.comment : 'Sheet1'}"
+                       field="${po.name}">
+                    <fields>
+                        <c:for var="fieldMeta" items="${fieldMetas}">
+                            <field name="${fieldMeta.name}" displayName="${fieldMeta.displayName}" groupField="${fieldMeta.groupField}">
+                                <schema stdDomain="${fieldMeta.stdDomain}" dict="${fieldMeta.dict}"/>
+                            </field>
+                        </c:for>
+                        <c:for var="groupField" items="${groupFields.values()}">
+                            <field name="${groupField.name}" displayName="${groupField.displayName}">
+                                <schema stdDomain="string"/>
+                            </field>
+                        </c:for>
+                    </fields>
+                </sheet>
+            </source>
+        </GenSheetConfig>
+    </tags>
+</lib>

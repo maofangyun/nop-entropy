@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<poConfig xmlns:x="/nop/schema/xdsl.xdef"
+          x:schema="/nop/schema/seago/po.xdef"
+          packageName="com.seago.list">
+    <pos>
+        <po name="AbstractContentPo" abstract="true" extends="com.seago.persistent.entity.AbstractEntity">
+            <props>
+                <prop name="objectId" type="Long" comment="对象ID"/>
+                <prop name="objectType" type="String" comment="对象类型"/>
+                <prop name="isCopyWorking" type="Boolean" comment="是否副本相关内容"/>
+            </props>
+        </po>
+        <po name="ListInstPartContentPo" extends="AbstractContentPo" tableName="sg_list_inst_content" comment="安装托盘表的清单内容表">
+            <props>
+                <prop name="partCode" type="String" comment="安装件编号"/>
+                <prop name="partName" type="String" comment="安装件名称"/>
+                <prop name="spec" type="String" comment="物资规格"/>
+                <prop name="materialModel" type="String" comment="物资型号"/>
+                <prop name="texture" type="String" comment="物资材质"/>
+                <prop name="amount" type="Double" comment="数量"/>
+                <prop name="defaultUnit" type="String" comment="计量单位"/>
+                <prop name="weight" type="String" comment="重量"/>
+                <prop name="paintingArea" type="Double" comment="涂装面积"/>
+                <prop name="paintingCode" type="String" comment="涂装编码"/>
+                <prop name="porCode" type="String" comment="订货清单号"/>
+                <prop name="source" type="Long" comment="来源"/>
+                <prop name="workType" type="String" comment="工种"/>
+                <prop name="remark" type="String" comment="备注"/>
+            </props>
+        </po>
+    </pos>
+
+</poConfig>

@@ -2,9 +2,8 @@ plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.25"
 
-    id("org.jetbrains.intellij") version "1.17.4"
     // for idea 2025+
-//    id("org.jetbrains.intellij.platform") version "2.10.0"
+    id("org.jetbrains.intellij.platform") version "2.1.0"
 }
 
 
@@ -18,28 +17,26 @@ repositories {
     mavenCentral()
 
     // for idea 2025+
-//    intellijPlatform {
-//        defaultRepositories()
-//    }
+    intellijPlatform {
+        defaultRepositories()
+        localPlatformArtifacts() // 这是使用本地环境所必须声明的仓库
+    }
 }
 
-// Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-intellij {
-    version.set("2023.2.8")
-    //version.set("2022.3")
-    type.set("IC") // Target IDE Platform
 
-    plugins.set(listOf("java", "gradle", "org.jetbrains.plugins.yaml"))
-}
 
 dependencies {
     // for idea 2025+
-//    intellijPlatform {
-//        intellijIdeaCommunity("2025.2.2")
-//
-//        bundledPlugins("com.intellij.java", "com.intellij.gradle", "org.jetbrains.plugins.yaml")
-//    }
+    intellijPlatform {
+        // 由于解压后的 ZIP 包里缺少部分依赖映射，强行使用 local 会触发找不到依赖的错误。
+        // 请在此处通过下载方式引入官方源：
+        intellijIdeaCommunity("2025.2.2")
+
+        bundledPlugins("com.intellij.java", "com.intellij.gradle", "org.jetbrains.plugins.yaml")
+        
+        pluginVerifier()
+        zipSigner()
+    }
 
     // ANTLR 适配器：https://github.com/antlr/antlr4-intellij-adaptor
     implementation("org.antlr:antlr4-intellij-adaptor:0.1")
@@ -76,8 +73,8 @@ tasks {
     }
 
     patchPluginXml {
-        sinceBuild.set("232")
-        untilBuild.set("253.*")
+        sinceBuild.set("261")
+        untilBuild.set("263.*")
     }
 
     signPlugin {

@@ -1,0 +1,8 @@
+<model x:schema="/nop/schema/register-model.xdef" xmlns:x="/nop/schema/xdsl.xdef"
+       name="jpa">
+
+    <loaders>
+        <xdsl-loader fileType="po.xml" schemaPath="/nop/schema/seago/po.xdef"/>
+    </loaders>
+
+</model>

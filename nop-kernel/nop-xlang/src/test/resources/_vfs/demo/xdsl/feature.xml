@@ -1,0 +1,44 @@
+<my-config xmlns:x="/nop/schema/xdsl.xdef"
+           x:schema="/nop/schema/xdef.xdef"
+           x:extends="/demo/xdsl/base.xml">
+
+    <!-- 1. 特性：x:before / x:after 精准控制顺序 -->
+    <!-- 将该节点强行插队到 id为 sys1 的节点前面 -->
+    <authNode x:id="auth1" x:before="sys1">
+        <config>VIP Only (Before sys1)</config>
+    </authNode>
+
+    <logNode x:id="log1" x:after="sys1">
+        <config>Log node (After sys1)</config>
+    </logNode>
+
+    <!-- 2. 特性：x:key-attr 改变合并主键 -->
+    <!-- 不依赖该节点的 x:id 是否同名，通过 myKey="bizX" 定位并合并 base.xml 中的 someNode -->
+    <someNode myKey="bizX" x:key-attr="myKey">
+        <extraData>Added Data (Merged by myKey)</extraData>
+    </someNode>
+
+    <!-- 3. 特性：<x:super> 嵌套包装父节点 -->
+    <wrapperNode x:id="wrap1">
+         <my-custom-wrapper>
+             <prefix>I am added before base children</prefix>
+             <!-- 原本 base.xml 中 wrap1 里的孩子 (<baseChild>) 会被自动提取并塞到 x:super 这里来！取代 x:super -->
+             <x:super /> 
+         </my-custom-wrapper>
+    </wrapperNode>
+
+    <!-- 4. 特性：x:abstract 模板 和 <x:prototye-super> -->
+    <templateNode x:id="tplA" x:abstract="true">
+        <templateVar>Value From Template</templateVar>
+    </templateNode>
+
+    <childNode x:id="child1" x:prototype="tplA" x:prototype-override="merge">
+        <myVar>My specific variable</myVar>
+        <!-- 将模板节点(tplA)的内容包装在 wrapTemplate 里面 -->
+        <wrapTemplate>
+            <!-- 注意 xdsl.xdef 中的拼写就是 prototye-super (少了一个 p) -->
+            <x:prototype-super />
+        </wrapTemplate>
+    </childNode>
+
+</my-config>

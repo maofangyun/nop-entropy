@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PDF 文档示例 - 演示高级差量合并技术 -->
+<pdf x:schema="/nop/schema/pdf.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef"
+     x:extends="/config/pdf/sales-report-base.xml"
+     id="sales-report-custom-delta">
+
+    <description>定制版销售报告 - 演示高级差量合并</description>
+
+    <!-- 覆盖元数据 -->
+    <metadata creationDate="2026-03-17" modificationDate="2026-03-17" compressed="false"/>
+
+    <!-- 演示：删除某个样式 -->
+    <styles>
+        <style>
+            <!-- x:override="remove" 删除基础模板中的样式 -->
+            <styleEntry name="section-title" x:override="remove"/>
+            
+            <!-- 演示：修改现有样式 -->
+            <styleEntry name="title"
+                        x:override="merge"
+                        fontSize="20"
+                        fontFamily="Helvetica"
+                        color="#0066CC">
+                <description>修改后的标题样式 - 蓝色、更大字号、Helvetica字体</description>
+            </styleEntry>
+
+            <!-- 演示：新增样式 -->
+            <styleEntry name="custom-warning"
+                        fontSize="12"
+                        fontFamily="Arial"
+                        bold="true"
+                        color="#FF9900"
+                        backgroundColor="#FFF5E6">
+                <description>警告提示样式</description>
+            </styleEntry>
+        </style>
+    </styles>
+
+    <pages>
+        <page id="page-1">
+            <!-- 修改页脚内容 -->
+            <footer id="footer-para" className="page-footer">
+                <content>机密文档 - 仅供内部使用</content>
+            </footer>
+
+            <content>
+                <!-- 在现有内容前插入新内容 -->
+                <paragraph id="notice-para"
+                          fontSize="9"
+                          color="#FF0000"
+                          align="right"
+                          x:override="prepend">
+                    <text>重要提示：本报告包含敏感商业信息</text>
+                </paragraph>
+            </content>
+        </page>
+
+        <!-- 演示：添加全新页面 -->
+        <page id="page-2" x:override="append">
+            <header className="page-header">
+                <content>绩效评估图表</content>
+            </header>
+
+            <footer className="page-footer">
+                <content>第 ${pageNumber} / ${totalPages} 页</content>
+            </footer>
+
+            <content>
+                <paragraph id="page2-title" className="title">
+                    <text>季度绩效总览</text>
+                </paragraph>
+                
+                <paragraph id="page2-summary" className="body-text">
+                    <text>本季度各项KPI指标达成情况良好，整体业绩超出预期12%。</text>
+                </paragraph>
+
+                <!-- 可以在这里添加图表占位符 -->
+                <paragraph id="chart-placeholder"
+                          fontSize="12"
+                          fontFamily="Arial"
+                          bold="true"
+                          color="#FF9900"
+                          spaceBefore="30"
+                          spaceAfter="30">
+                    <text>[此处可插入性能趋势图 - 根据实际数据生成的图表将显示在此位置]</text>
+                </paragraph>
+
+                <paragraph id="suggestions-title" className="subtitle">
+                    <text>改进建议</text>
+                </paragraph>
+
+                <paragraph id="suggestion-1" className="body-text">
+                    <text>1. 继续加强产品创新投入</text>
+                </paragraph>
+
+                <paragraph id="suggestion-2" className="body-text">
+                    <text>2. 优化客户服务流程，提升满意度</text>
+                </paragraph>
+
+                <paragraph id="suggestion-3" className="body-text">
+                    <text>3. 拓展新兴市场渠道</text>
+                </paragraph>
+            </content>
+        </page>
+    </pages>
+
+</pdf>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<poConfig xmlns:x="/nop/schema/xdsl.xdef"
+          x:schema="/nop/schema/seago/po.xdef"
+          packageName="com.seago.list">
+    <pos>
+        <po name="AbstractBusinessDoc" abstract="true" extends="com.seago.vc.business.BusinessPo">
+            <props>
+                <prop name="serialCode" type="String" comment="适用工程编号" length="2000"/>
+            </props>
+        </po>
+        <po name="AbstractBranchDoc" abstract="true" extends="com.seago.vc.po.BranchPo"/>
+        <po name="AbstractMasterDoc" abstract="true" extends="com.seago.vc.po.MasterPo"/>
+
+        <po name="SgListMasterPo" extends="AbstractMasterDoc" comment="清单主对象" tableName="sg_list_master" iteration="SgListPo"/>
+        <po name="SgListBranchPo" extends="AbstractBranchDoc" comment="清单大版本对象" tableName="sg_list_version" iteration="SgListPo">
+            <props>
+                <prop name="porMark" type="Integer" comment="POR下发标识"/>
+                <prop name="subItemMark" type="Integer" comment="成套子项下发标识"/>
+            </props>
+        </po>
+        <po name="ListAttributeValue" extends="com.seago.vc.attribute.AbstractAttributeValue" comment="清单动态属性表"
+            tableName="sg_list_attr_value" indexes="objectId,objectName,keyName"/>
+        <po name="SgListPo" extends="AbstractBusinessDoc" comment="清单对象" tableName="sg_list"
+            branch="SgListBranchPo" master="SgListMasterPo" attr="ListAttributeValue" attrView="sg_list_attr_value_view">
+            <props>
+                <prop name="dataSource" type="String" comment="是否为设备订货生成清单的标识"/>
+                <prop name="englishName" type="String" comment="英文名称"/>
+                <prop name="designPhase" type="String" comment="设计阶段"/>
+                <prop name="usageSpecialCodes" type="String" comment="使用专业"/>
+                <prop name="responsiblePersonId" type="Long" comment="负责人ID"/>
+                <prop name="requireListMasterId" type="Long" comment="相关POR清单MasterId"/>
+                <prop name="toUpdate" type="String" comment="待更新标识（零部件清单用）"/>
+            </props>
+        </po>
+        <po name="ListRelatePartsPo" extends="com.seago.persist.entity.BinaryLink" comment="清单与零部件关联信息表" tableName="sg_list_relate_part">
+            <props>
+                <prop name="partMaterId" type="Long" comment="零部件主对象ID"/>
+                <prop name="partCode" type="String" comment="零部件编号"/>
+                <prop name="partName" type="String" comment="零部件名称"/>
+                <prop name="partId" type="Long" comment="零部件小版本ID"/>
+                <prop name="transId" type="String" comment="AM推送的批次号"/>
+            </props>
+        </po>
+        <po name="ListMaterialQuantity" extends="com.seago.persistent.entity.AbstractEntity" comment="清单采购数量记录表" tableName="sg_list_material_quantity">
+            <props>
+                <prop name="applyProjectCode" type="String" comment="适用工程编号" length="2000"/>
+                <prop name="materialId" type="Long" comment="物资ID"/>
+                <prop name="materialCode" type="String" comment="物资编码"/>
+                <prop name="materialName" type="String" comment="物资名称"/>
+                <prop name="quantity" type="Double" comment="采购数量"/>
+                <prop name="quotaQuantity" type="Double" comment="定额数量"/>
+                <prop name="expectQuantity" type="Double" comment="预用数量"/>
+                <prop name="useQuantity" type="Double" comment="已用数量"/>
+                <prop name="requireListCode" type="String" comment="物资采购需求清单编号"/>
+                <prop name="requireListMasterId" type="Long" comment="物资采购需求清单主对象ID"/>
+                <prop name="requireListRowIndex" type="String" comment="物资采购需求清单行号"/>
+            </props>
+        </po>
+    </pos>
+
+</poConfig>

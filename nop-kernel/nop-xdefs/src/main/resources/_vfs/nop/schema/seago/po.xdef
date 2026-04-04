@@ -1,0 +1,21 @@
+<poConfig x:schema="/nop/schema/xdef.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef"
+     xmlns:xdef="/nop/schema/xdef.xdef"
+     xdef:bean-package="com.seago.code.po"
+     packageName="string"
+     xdef:name="PoConfig">
+
+    <pos xdef:body-type="list">
+        <po name="!string" abstract="!boolean=false" tableName="string" extends="string"
+            comment="string" indexes="string"
+            iteration="string" branch="string" master="string"
+            attr="string" attrView="string" xdef:name="PoInfo">
+            <props xdef:body-type="list">
+                <prop name="!string" type="!string" comment="string" length="int" 
+                      excelHeader="string" excelWidth="int" dict="string" 
+                      listProvider="string" hidden="boolean" xdef:name="PropInfo"/>
+            </props>
+        </po>
+    </pos>
+
+</poConfig>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PDF 样式基础文件 - 作为独立的样式定义模板，可以通过差量继承扩展 -->
+<pdf x:schema="/nop/schema/pdf.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef"
+     id="sales-report-styles">
+
+    <description>PDF样式定义集合 - 基础模板</description>
+
+    <styles>
+        <style>
+            <!-- 标题样式 -->
+            <styleEntry name="title"
+                        fontSize="18"
+                        fontFamily="SimSun"
+                        bold="true"
+                        color="#FF0000"
+                        align="center"
+                        spaceAfter="20">
+                <description>文档标题样式</description>
+            </styleEntry>
+
+            <!-- 小标题样式 -->
+            <styleEntry name="subtitle"
+                        fontSize="14"
+                        fontFamily="SimSun"
+                        bold="true"
+                        color="#333333"
+                        align="left"
+                        spaceAfter="10"
+                        spaceBefore="15"
+                        lineHeight="1.5">
+                <description>小标题样式</description>
+            </styleEntry>
+
+            <!-- 正文样式 -->
+            <styleEntry name="body-text"
+                        fontSize="11"
+                        fontFamily="SimSun"
+                        bold="false"
+                        color="#000000"
+                        align="left"
+                        spaceAfter="5"
+                        lineHeight="1.5">
+                <description>普通正文样式</description>
+            </styleEntry>
+
+            <!-- 强调文本样式 -->
+            <styleEntry name="emphasis"
+                        fontSize="11"
+                        fontFamily="SimSun"
+                        bold="true"
+                        color="#0066CC"
+                        align="left">
+                <description>强调文本样式</description>
+            </styleEntry>
+
+            <!-- 表格样式 -->
+            <styleEntry name="table"
+                        borderWidth="1"
+                        borderColor="#000000"
+                        borderStyle="solid"
+                        cellPadding="5">
+                <description>表格容器样式</description>
+            </styleEntry>
+
+            <!-- 表头单元格样式 -->
+            <styleEntry name="table-header-cell"
+                        backgroundColor="#CCCCCC"
+                        color="#000000"
+                        bold="true"
+                        lineHeight="15"
+                        fontSize="11"
+                        align="center"
+                        verticalAlign="middle">
+                <description>表头单元格样式</description>
+            </styleEntry>
+
+            <!-- 表格数据单元格样式 -->
+            <styleEntry name="table-cell"
+                        backgroundColor="#FFFFFF"
+                        color="#000000"
+                        bold="false"
+                        lineHeight="15"
+                        fontSize="10"
+                        align="left"
+                        verticalAlign="middle">
+                <description>表格普通单元格样式</description>
+            </styleEntry>
+
+            <!-- 表格总计行单元格样式 -->
+            <styleEntry name="table-footer-cell"
+                        backgroundColor="#E0E0E0"
+                        color="#FF0000"
+                        bold="true"
+                        fontSize="11"
+                        align="left"
+                        verticalAlign="middle">
+                <description>表格总计行单元格样式 (红色文字)</description>
+            </styleEntry>
+
+            <!-- 数字单元格样式 -->
+            <styleEntry name="table-cell-number"
+                        backgroundColor="#FFFFFF"
+                        color="#000000"
+                        bold="false"
+                        fontSize="10"
+                        align="right"
+                        verticalAlign="middle">
+                <description>数字单元格样式</description>
+            </styleEntry>
+
+            <!-- 居中单元格样式 -->
+            <styleEntry name="table-cell-center"
+                        backgroundColor="#FFFFFF"
+                        color="#000000"
+                        bold="false"
+                        fontSize="10"
+                        align="center"
+                        verticalAlign="middle">
+                <description>居中单元格样式</description>
+            </styleEntry>
+
+            <!-- 页眉样式 -->
+            <styleEntry name="page-header"
+                        lineHeight="2"
+                        fontSize="14"
+                        fontFamily="SimSun"
+                        color="#333333">
+                <description>页眉样式</description>
+            </styleEntry>
+
+            <!-- 页脚样式 -->
+            <styleEntry name="page-footer"
+                        lineHeight="2"
+                        fontSize="10"
+                        fontFamily="SimSun"
+                        color="#999999">
+                <description>页脚样式</description>
+            </styleEntry>
+
+            <!-- 章节样式 - 选择器示例 -->
+            <styleEntry name="section-title"
+                        selector="paragraph.title"
+                        fontSize="16"
+                        fontFamily="SimSun"
+                        bold="true"
+                        color="#FF0000"
+                        align="left"
+                        spaceBefore="20"
+                        spaceAfter="10"
+                        underline="true">
+                <description>使用选择器的章节标题样式</description>
+            </styleEntry>
+
+        </style>
+    </styles>
+
+</pdf>

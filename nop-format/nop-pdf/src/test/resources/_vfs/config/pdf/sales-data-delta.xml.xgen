@@ -1,0 +1,95 @@
+<c:unit xpl:outputMode="node" xmlns:c="c">
+
+<!--
+    XGen 运行时模板: 动态生成销售数据 Delta XML（使用 xml 输出模式）
+    输出的 XML 文本含有 x:extends 属性，
+    由 OpenPdfDocumentGenerator.executeXGenTemplate 解析为 XNode 后，
+    经 DslNodeLoader.loadFromNode 与 sales-report-base.xml 进行 x:extends 差量合并。
+
+    注入的上下文变量（由 generatePdfFromXml 传入）:
+    - title:        报告标题
+    - author:       作者
+    - date:         日期
+    - department:   部门
+    - quarter:      季度
+-->
+<pdf x:schema="/nop/schema/pdf.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef"
+     x:extends="/config/pdf/sales-report-base.xml"
+     id="sales-data-delta-runtime">
+
+    <!-- 追加新页面：运行时 XGen 动态生成的销售数据明细 -->
+    <pages>
+        <page id="page-xgen-data" x:override="append">
+            <header className="page-header">
+                <content>销售数据明细 - XGen 运行时生成</content>
+            </header>
+
+            <content>
+                <paragraph id="xgen-title" className="subtitle">
+                    <text>销售数据汇总（运行时 XGen 生成）</text>
+                </paragraph>
+
+                <paragraph id="xgen-desc" className="body-text">
+                    <text>以下数据由 XGen 模板在运行时动态生成，并通过 x:extends 与基础模板合并。</text>
+                </paragraph>
+
+                <table id="xgen-sales-table"
+                       width="100%"
+                       borderWidth="1"
+                       borderColor="#336699"
+                       cellPadding="5">
+
+                    <columns:GenColumnsForPartList salesData="${salesData}" xpl:lib="/config/pdf/columns.xlib" />
+
+                    <header>
+                        <row>
+                            <cells>
+                                <!-- 此单元格由于横跨两行，使用了 rowSpan="2" -->
+                                <cell text="部门/区域" bold="true" backgroundColor="#336699" color="#FFFFFF" rowSpan="2" verticalAlign="middle" align="center"/>
+                                <!-- 此单元格横跨三列，使用了 colSpan="3" -->
+                                <cell text="销售绩效指标" bold="true" backgroundColor="#336699" color="#FFFFFF" colSpan="3" align="center"/>
+                            </cells>
+                        </row>
+                        <row>
+                            <cells>
+                                <cell text="目标值" bold="true" className="table-header-cell"/>
+                                <cell text="实际值" bold="true" className="table-header-cell"/>
+                                <cell text="达成率" bold="true" className="table-header-cell"/>
+                            </cells>
+                        </row>
+                    </header>
+                    <rows>
+                        <!-- 动态生成按区域的销售数据 -->
+                        <!-- 通过引用的 xlib 生成动态的按区域销售数据组件 -->
+                        <sales:GenSalesDataRows salesData="${salesData}" xpl:lib="/config/pdf/sales.xlib" />
+                        
+                        <!-- 总计行，使用注入的 summary 变量 -->
+                        <row>
+                            <cells>
+                                <cell text="总计" bold="true"/>
+                                <cell text="${targetSales}" align="right" bold="true"/>
+                                <cell text="${totalSales}" align="right" bold="true"/>
+                                <cell text="${achievement}" align="center" bold="true"/>
+                            </cells>
+                        </row>
+                    </rows>
+                </table>
+
+                <paragraph id="xgen-summary" className="body-text" spaceBefore="15">
+                    <text>本季度（${quarter}）${department}总销售额为 ${totalSales}，目标 ${targetSales}，达成率 ${achievement}。</text>
+                </paragraph>
+
+                <paragraph id="xgen-note" fontSize="9" color="#888888" spaceBefore="20">
+                    <text>* 本页内容由 Nop XGen 模板运行时生成，报告日期：${date}</text>
+                </paragraph>
+            </content>
+        </page>
+    </pages>
+    <export compression="true">
+        <security userPassword="123" ownerPassword="abc" allowPrint="true"/>
+        <watermark text="NOP ENTROPY" fontSize="15" opacity="0.4" angle="45" rows="5" columns="2" color="#FFCCCC"/>
+    </export>
+
+</pdf>
+</c:unit>

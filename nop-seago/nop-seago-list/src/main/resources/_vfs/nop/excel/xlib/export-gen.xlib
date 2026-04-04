@@ -1,0 +1,362 @@
+<lib x:schema="/nop/schema/xlib.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef" xmlns:thisLib="thisLib" xmlns:c="c">
+
+    <tags>
+        <GenWorkbook outputMode="xml">
+            <attr name="po"/>
+            <attr name="data"/>
+            <attr name="dictOptions"/>
+            <attr name="listOptions"/>
+            <source>
+                <c:script><![CDATA[
+                    import java.lang.Boolean;
+                    import java.util.ArrayList;
+                    import java.util.Collections;
+                    import java.util.LinkedHashMap;
+                    import com.seago.code.excel.PoExcelHelper;
+
+                    const isNotBlank = (str) => {
+                        return str != null && str.trim().length() > 0;
+                    };
+
+                    const eq = (a, b) => {
+                        if (a == null) return b == null;
+                        return a == b;
+                    };
+
+                    const getVisibleProps = (props) => {
+                        if (props == null) return [];
+                        return props.filter(prop => prop != null && !Boolean.TRUE.equals(prop.hidden));
+                    };
+
+                    const buildFieldDisplayName = (prop) => {
+                        if (isNotBlank(prop.excelHeader)) {
+                            const parts = prop.excelHeader.split('/');
+                            return parts[parts.length - 1].trim();
+                        }
+                        if (isNotBlank(prop.comment)) {
+                            return prop.comment.trim();
+                        }
+                        return prop.name;
+                    };
+
+                    const splitHeaderParts = (prop) => {
+                        const parts = new ArrayList();
+                        if (isNotBlank(prop.excelHeader)) {
+                            for (let part of prop.excelHeader.split('/')) {
+                                if (isNotBlank(part)) {
+                                    parts.add(part.trim());
+                                }
+                            }
+                        }
+                        if (parts.isEmpty()) {
+                            parts.add(buildFieldDisplayName(prop));
+                        }
+                        return parts;
+                    };
+
+                    const calculateHeaderRowCount = (props) => {
+                        let maxDepth = 1;
+                        for (let prop of props) {
+                            const depth = splitHeaderParts(prop).size();
+                            if (depth > maxDepth) {
+                                maxDepth = depth;
+                            }
+                        }
+                        return maxDepth;
+                    };
+
+                    const buildHeaderLevels = (props, headerRowCount) => {
+                        const headerLevels = new ArrayList();
+                        for (let prop of props) {
+                            const parts = splitHeaderParts(prop);
+                            const levels = new ArrayList();
+                            for (let i = 0; i < parts.size(); i++) {
+                                levels.add(parts.get(i));
+                            }
+                            while (levels.size() < headerRowCount) {
+                                levels.add(levels.get(levels.size() - 1));
+                            }
+                            headerLevels.add(levels);
+                        }
+                        return headerLevels;
+                    };
+
+                    const isCoveredByVerticalMerge = (headerGrid, rowIdx, colIdx) => {
+                        for (let r = 0; r < rowIdx; r++) {
+                            const row = headerGrid.get(r);
+                            for (let c = 0; c < row.size(); c++) {
+                                const cellMeta = row.get(c);
+                                if (cellMeta == null) {
+                                    continue;
+                                }
+                                const mergeDown = cellMeta.mergeDown != null ? cellMeta.mergeDown : 0;
+                                const mergeAcross = cellMeta.mergeAcross != null ? cellMeta.mergeAcross : 0;
+                                if (mergeDown > 0 && r + mergeDown >= rowIdx && c <= colIdx && c + mergeAcross >= colIdx) {
+                                    return true;
+                                }
+                            }
+                        }
+                        return false;
+                    };
+
+                    const buildHeaderRows = (props, headerRowCount) => {
+                        const colCount = props.size();
+                        const headerLevels = buildHeaderLevels(props, headerRowCount);
+                        const headerGrid = new ArrayList();
+                        const headerRows = new ArrayList();
+
+                        for (let rowIdx = 0; rowIdx < headerRowCount; rowIdx++) {
+                            const gridRow = new ArrayList();
+                            for (let i = 0; i < colCount; i++) {
+                                gridRow.add(null);
+                            }
+
+                            const actualRow = new ArrayList();
+                            let col = 0;
+                            while (col < colCount) {
+                                if (isCoveredByVerticalMerge(headerGrid, rowIdx, col)) {
+                                    actualRow.add({
+                                        value: null,
+                                        mergeAcross: 0,
+                                        mergeDown: 0
+                                    });
+                                    col++;
+                                    continue;
+                                }
+
+                                const currentLabel = headerLevels.get(col).get(rowIdx);
+                                let mergeAcross = 0;
+                                let nextCol = col + 1;
+                                while (nextCol < colCount && eq(headerLevels.get(nextCol).get(rowIdx), currentLabel)) {
+                                    let sameGroup = true;
+                                    for (let k = 0; k < rowIdx; k++) {
+                                        if (!eq(headerLevels.get(col).get(k), headerLevels.get(nextCol).get(k))) {
+                                            sameGroup = false;
+                                            break;
+                                        }
+                                    }
+                                    if (!sameGroup) {
+                                        break;
+                                    }
+                                    mergeAcross++;
+                                    nextCol++;
+                                }
+
+                                let mergeDown = 0;
+                                for (let belowRow = rowIdx + 1; belowRow < headerRowCount; belowRow++) {
+                                    let allColsSame = true;
+                                    for (let c = col; c < nextCol; c++) {
+                                        if (!eq(headerLevels.get(c).get(belowRow), currentLabel)) {
+                                            allColsSame = false;
+                                            break;
+                                        }
+                                    }
+                                    if (allColsSame) {
+                                        mergeDown++;
+                                    } else {
+                                        break;
+                                    }
+                                }
+
+                                const cellMeta = {
+                                    value: currentLabel,
+                                    mergeAcross: mergeAcross,
+                                    mergeDown: mergeDown
+                                };
+                                gridRow.set(col, cellMeta);
+                                actualRow.add(cellMeta);
+                                
+                                // Output placeholders for the columns covered by mergeAcross
+                                for (let i = 1; i <= mergeAcross; i++) {
+                                    actualRow.add({
+                                        value: null,
+                                        mergeAcross: 0,
+                                        mergeDown: 0
+                                    });
+                                }
+
+                                col = nextCol;
+                            }
+
+                            headerGrid.add(gridRow);
+                            headerRows.add(actualRow);
+                        }
+                        return headerRows;
+                    };
+
+                    const getOptionValues = (optionsMap, key) => {
+                        if (optionsMap == null || !isNotBlank(key)) {
+                            return null;
+                        }
+                        return optionsMap.get(key);
+                    };
+
+                    const buildOptionSheetName = (prop) => {
+                        if (isNotBlank(prop.listProvider)) {
+                            return prop.name + 'List';
+                        }
+                        if (isNotBlank(prop.dict)) {
+                            return prop.dict + 'Options';
+                        }
+                        return null;
+                    };
+
+                    const buildOptionSheets = (props, dictOptions, listOptions) => {
+                        const sheetMap = new LinkedHashMap();
+                        for (let prop of props) {
+                            let values = null;
+                            if (isNotBlank(prop.dict)) {
+                                values = getOptionValues(dictOptions, prop.dict);
+                            } else if (isNotBlank(prop.listProvider)) {
+                                values = getOptionValues(listOptions, prop.listProvider);
+                            }
+                            if (values == null || values.isEmpty()) {
+                                continue;
+                            }
+
+                            const sheetName = buildOptionSheetName(prop);
+                            if (!sheetMap.containsKey(sheetName)) {
+                                sheetMap.put(sheetName, {
+                                    name: sheetName,
+                                    values: values
+                                });
+                            }
+                        }
+                        return new ArrayList(sheetMap.values());
+                    };
+
+                    const buildValidations = (props, headerRowCount, dictOptions, listOptions) => {
+                        const validations = new ArrayList();
+                        const dataStartRow = headerRowCount + 1;
+                        for (let i = 0; i < props.size(); i++) {
+                            const prop = props.get(i);
+                            let formula1 = null;
+                            if (isNotBlank(prop.listProvider)) {
+                                const options = getOptionValues(listOptions, prop.listProvider);
+                                formula1 = options != null && !options.isEmpty() ? '=' + prop.name + 'List!$A:$A' : '""';
+                            } else if (isNotBlank(prop.dict)) {
+                                const options = getOptionValues(dictOptions, prop.dict);
+                                formula1 = options != null && !options.isEmpty() ? '=' + prop.dict + 'Options!$A:$A' : '""';
+                            }
+
+                            if (formula1 != null) {
+                                const colLetter = PoExcelHelper.getColLetter(i);
+                                validations.add({
+                                    sqref: colLetter + dataStartRow + ':' + colLetter + '1048576',
+                                    formula1: formula1
+                                });
+                            }
+                        }
+                        return validations;
+                    };
+
+                    const buildDataRows = (data, props) => {
+                        const rows = new ArrayList();
+                        if (data == null) {
+                            return rows;
+                        }
+                        for (let item of data) {
+                            const row = new ArrayList();
+                            for (let prop of props) {
+                                row.add(PoExcelHelper.getPropertyValue(item, prop.name));
+                            }
+                            rows.add(row);
+                        }
+                        return rows;
+                    };
+
+                    const visibleProps = getVisibleProps(po.props);
+                    const headerRowCount = calculateHeaderRowCount(visibleProps);
+                    const headerRows = buildHeaderRows(visibleProps, headerRowCount);
+                    const optionSheets = buildOptionSheets(visibleProps, dictOptions, listOptions);
+                    const validations = buildValidations(visibleProps, headerRowCount, dictOptions, listOptions);
+                    const dataRows = buildDataRows(data, visibleProps);
+                ]]></c:script>
+                <workbook x:schema="/nop/schema/excel/workbook.xdef"
+                          xmlns:x="/nop/schema/xdsl.xdef">
+                    <styles>
+                        <style id="header" name="Header" horizontalAlign="center" verticalAlign="center" fillFgColor="C0C0C0" fillPattern="solid" wrapText="true">
+                            <font bold="true"/>
+                            <topBorder type="thin" color="000000"/>
+                            <bottomBorder type="thin" color="000000"/>
+                            <leftBorder type="thin" color="000000"/>
+                            <rightBorder type="thin" color="000000"/>
+                        </style>
+                        <style id="data" name="Data">
+                            <topBorder type="thin" color="000000"/>
+                            <bottomBorder type="thin" color="000000"/>
+                            <leftBorder type="thin" color="000000"/>
+                            <rightBorder type="thin" color="000000"/>
+                        </style>
+                    </styles>
+                    <sheets>
+                        <c:for var="optionSheet" items="${optionSheets}">
+                            <sheet name="${optionSheet.name}">
+                                <table>
+                                    <rows>
+                                        <c:for var="optionValue" items="${optionSheet.values}">
+                                            <row>
+                                                <cells>
+                                                    <cell styleId="data">
+                                                        <c:if test="${optionValue != null}">
+                                                            <value>${optionValue}</value>
+                                                        </c:if>
+                                                    </cell>
+                                                </cells>
+                                            </row>
+                                        </c:for>
+                                    </rows>
+                                </table>
+                            </sheet>
+                        </c:for>
+
+                        <sheet name="${po.name != null ? po.name : 'Sheet1'}">
+                            <table>
+                                <rows>
+                                    <c:for var="headerRow" items="${headerRows}">
+                                        <row>
+                                            <cells>
+                                                <c:for var="cellMeta" items="${headerRow}">
+                                                    <cell styleId="header"
+                                                          mergeAcross="${cellMeta.mergeAcross > 0 ? cellMeta.mergeAcross : null}"
+                                                          mergeDown="${cellMeta.mergeDown > 0 ? cellMeta.mergeDown : null}">
+                                                        <c:if test="${cellMeta.value != null}">
+                                                            <value>${cellMeta.value}</value>
+                                                        </c:if>
+                                                    </cell>
+                                                </c:for>
+                                            </cells>
+                                        </row>
+                                    </c:for>
+
+                                    <c:for var="dataRow" items="${dataRows}">
+                                        <row>
+                                            <cells>
+                                                <c:for var="cellValue" items="${dataRow}">
+                                                    <cell styleId="data">
+                                                        <c:if test="${cellValue != null}">
+                                                            <value>${cellValue}</value>
+                                                        </c:if>
+                                                    </cell>
+                                                </c:for>
+                                            </cells>
+                                        </row>
+                                    </c:for>
+                                </rows>
+                            </table>
+
+                            <dataValidations>
+                                <c:for var="validation" items="${validations}">
+                                    <dataValidation sqref="${validation.sqref}" type="list">
+                                        <formula1>${validation.formula1}</formula1>
+                                    </dataValidation>
+                                </c:for>
+                            </dataValidations>
+                        </sheet>
+                    </sheets>
+                </workbook>
+            </source>
+        </GenWorkbook>
+    </tags>
+</lib>

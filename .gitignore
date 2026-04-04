@@ -102,5 +102,6 @@ dependency-reduced-pom.xml
 # Log directories
 **/log/
 .sisyphus/
+/nop-idea-plugin/
 /nop-task.md
 /nul

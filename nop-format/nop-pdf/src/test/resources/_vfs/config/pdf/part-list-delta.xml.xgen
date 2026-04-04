@@ -1,0 +1,57 @@
+<c:unit xpl:outputMode="node" xmlns:c="c">
+
+<!--
+    XGen 运行时模板: 动态生成销售数据 Delta XML（使用 xml 输出模式）
+    输出的 XML 文本含有 x:extends 属性，
+    由 OpenPdfDocumentGenerator.executeXGenTemplate 解析为 XNode 后，
+    经 DslNodeLoader.loadFromNode 与 sales-report-base.xml 进行 x:extends 差量合并。
+-->
+<pdf x:schema="/nop/schema/pdf.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef"
+     x:extends="/config/pdf/part-list-base.xml"
+     id="part-list-delta-runtime">
+
+    <pages>
+        <page id="page-1" x:override="merge">
+            <content>
+                <table id="part-table" x:override="merge"
+                       width="100%"
+                       borderWidth="1"
+                       borderColor="#336699"
+                       cellPadding="5">
+
+                    <header x:override="merge">
+                        <row id="2" height="20">
+                            <cells>
+                                <cell text="船号：${serialCode}" colSpan="5" align="left" className="table-header-cell"/>
+                                <cell text="区域：${partAreaCode}" colSpan="6" align="left" className="table-header-cell"/>
+                                <cell text="安装图号：${installDwgNo}" colSpan="7" align="left" className="table-header-cell"/>
+                                <cell text="制作图号：${fabDwgNo}" colSpan="8" align="left" className="table-header-cell"/>
+                                <cell text="托盘表编号：${code}" colSpan="14" align="left" className="table-header-cell"/>
+                            </cells>
+                        </row>
+                        <row id="3" height="20">
+                            <cells>
+                                <cell text="设计部门：${departName}" colSpan="11" align="left" className="table-header-cell"/>
+                                <cell text="联系电话：${userPhone}" colSpan="15" align="left" className="table-header-cell"/>
+                                <cell text="托盘表名称：${name}" colSpan="14" align="left" className="table-header-cell"/>
+                            </cells>
+                        </row>
+                    </header>
+
+                    <columns:GenColumnsForPartList widthTotal="200" widthUnit="5" xpl:lib="/config/pdf/columns.xlib"/>
+
+                    <rows>
+                        <part:GenPartDataRows partData="${partData}" xpl:lib="/config/pdf/part.xlib"/>
+                    </rows>
+                </table>
+            </content>
+        </page>
+    </pages>
+    <export compression="true">
+        <security userPassword="123" ownerPassword="abc" allowPrint="true"/>
+        <watermark text="NOP ENTROPY" fontSize="15" opacity="0.4" angle="45" rows="5" columns="2" color="#FFCCCC"/>
+    </export>
+
+</pdf>
+</c:unit>

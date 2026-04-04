@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+PDF 文档生成元模型定义
+支持表格单元格的行列合并、表头配置、复杂表格结构
+-->
+<pdf x:schema="/nop/schema/xdef.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef"
+     xmlns:xdef="/nop/schema/xdef.xdef"
+     xdef:bean-package="io.nop.report.pdf.model"
+     xdef:name="PdfModel"
+     id="!string"
+     title="string"
+     author="string"
+     subject="string"
+     creator="string"
+     producer="string"
+     pageSize="!string=A4"
+     pageOrientation="!string=portrait"
+     marginTop="!int=20"
+     marginBottom="!int=20"
+     marginLeft="!int=20"
+     marginRight="!int=20"
+     defaultFontFamily="string"
+     encoding="!string=UTF-8">
+
+    <description>!string</description>
+
+    <!-- 文档元数据 -->
+    <metadata xdef:name="PdfMetadata"
+              creationDate="string"
+              modificationDate="string"
+              keywords="string"
+              compressed="!boolean=true"
+              encrypted="!boolean=false">
+        <customProperty xdef:body-type="list" xdef:key-attr="name">
+            <property xdef:name="MetadataProperty" name="!string" value="!string"/>
+        </customProperty>
+    </metadata>
+
+    <!-- 页面配置 -->
+    <pages xdef:body-type="list" xdef:key-attr="id">
+        <page xdef:name="PdfPage"
+              id="!string"
+              className="string"
+              pageSize="string"
+              pageOrientation="string"
+              marginTop="int"
+              marginBottom="int"
+              marginLeft="int"
+              marginRight="int">
+
+            <header xdef:name="PdfPageHeader"
+                    id="string"
+                    className="string"
+                    height="int"
+                    fontSize="int"
+                    fontFamily="string"
+                    color="string">
+                <content>xpl-xjson</content>
+            </header>
+
+            <footer xdef:name="PdfPageFooter"
+                    id="string"
+                    className="string"
+                    instance="string"
+                    height="int"
+                    fontSize="int"
+                    fontFamily="string"
+                    color="string"
+                    pageMarginRight="float"
+                    pageMarginTop="float"
+                    totalMarginRight="float"
+                    totalMarginTop="float">
+                <content>xpl-xjson</content>
+            </footer>
+
+            <!-- 页面内容块 -->
+            <content xdef:body-type="list" xdef:key-attr="id">
+                <paragraph xdef:name="PdfParagraph"
+                           id="string"
+                           className="string"
+                           align="!string=left"
+                           fontSize="!int=12"
+                           fontFamily="!string=Arial"
+                           bold="!boolean=false"
+                           italic="!boolean=false"
+                           underline="!boolean=false"
+                           color="!string=#000000"
+                           lineHeight="!decimal=1.5"
+                           spaceAfter="!int=0"
+                           spaceBefore="!int=0">
+                    <text>string</text>
+                </paragraph>
+
+                <!-- 表格配置 -->
+                <table xdef:name="PdfTable"
+                       id="string"
+                       className="string"
+                       width="!string=100%"
+                       borderWidth="!int=1"
+                       borderColor="!string=#000000"
+                       borderStyle="!string=solid"
+                       cellPadding="!int=5"
+                       alternateRowColor="string"
+                       repeatHeaderRows="!int=0"
+                       repeatHeaderFirstColumn="!int=0">
+
+                    <!-- 列定义 -->
+                    <columns xdef:body-type="list" xdef:key-attr="index">
+                        <column xdef:name="PdfTableColumn"
+                                index="!int"
+                                className="string"
+                                width="!string"
+                                minWidth="int"
+                                maxWidth="int"
+                                align="!string=left"
+                                verticalAlign="!string=middle"
+                                hidden="!boolean=false">
+                        </column>
+                    </columns>
+
+                    <!-- 独立表头区定义 - 支持多行多列表头合并 -->
+                    <header xdef:name="PdfTableHeader" xdef:key-attr="id" xdef:body-type="list">
+                        <row id="string" xdef:ref="PdfTableRow"/>
+                    </header>
+
+                    <!-- 行定义 - 支持多个行 -->
+                    <rows xdef:body-type="list">
+                        <row xdef:name="PdfTableRow"
+                             className="string"
+                             height="int">
+                            <!-- 单元格 -->
+                            <cells xdef:body-type="list">
+                                <cell xdef:name="PdfTableCellBase"
+                                                   className="string"
+                                                   text="string"
+                                                   colSpan="!int=1"
+                                                   rowSpan="!int=1"
+                                                   align="string"
+                                                   verticalAlign="string"
+                                                   backgroundColor="string"
+                                                   color="string"
+                                                   bold="boolean"
+                                                   italic="boolean"
+                                                   fontSize="int"
+                                                   fontFamily="string"
+                                                   borderWidth="int"
+                                                   borderColor="string">
+                                    <content>xpl-xjson</content>
+                                </cell>
+                            </cells>
+                        </row>
+                    </rows>
+                </table>
+
+                <image xdef:name="PdfImage"
+                       id="string"
+                       className="string"
+                       src="!string"
+                       width="string"
+                       height="string"
+                       align="!string=left"
+                       alt="string">
+                    <description>string</description>
+                </image>
+
+                <chart xdef:name="PdfChart"
+                       id="string"
+                       type="!string"
+                       title="string"
+                       width="!string=400"
+                       height="!string=300">
+                    <config>xjson</config>
+                    <data xdef:ref="/nop/schema/schema/schema.xdef"/>
+                </chart>
+
+                <pageBreak xdef:name="PdfPageBreak" id="string"/>
+
+                <spacer xdef:name="PdfSpacer" id="string" height="!int"/>
+            </content>
+
+        </page>
+    </pages>
+
+    <!-- 样式定义 -->
+    <styles xdef:name="PdfStyles">
+        <style xdef:body-type="list" xdef:key-attr="name" xdef:support-extends="true">
+            <!-- 样式条目 - 支持类型选择器 -->
+            <styleEntry xdef:name="PdfStyle"
+                        name="!string"
+                        selector="string"
+                        fontSize="int"
+                        fontFamily="string"
+                        bold="boolean"
+                        italic="boolean"
+                        underline="boolean"
+                        color="string"
+                        backgroundColor="string"
+                        lineHeight="decimal"
+                        align="string"
+                        verticalAlign="string"
+                        borderWidth="int"
+                        borderColor="string"
+                        borderStyle="string"
+                        cellPadding="int"
+                        spaceBefore="int"
+                        spaceAfter="int">
+                <description>string</description>
+            </styleEntry>
+        </style>
+
+        <!-- 样式引用 - 允许引用外部样式文件 -->
+        <styleRefs xdef:body-type="list"
+              xdef:name="PdfStyleRef"
+              xdef:key-attr="path">
+            <styleRef path="!string" enabled="!boolean=true">
+                <description>string</description>
+            </styleRef>
+        </styleRefs>
+    </styles>
+
+    <!-- 字体配置 -->
+    <fonts xdef:body-type="list" xdef:key-attr="name">
+        <font xdef:name="PdfFont"
+              name="!string"
+              family="!string"
+              path="!string"
+              embed="!boolean=true"
+              size="!int=12">
+            <description>string</description>
+        </font>
+    </fonts>
+
+    <!-- 导出配置 -->
+    <export xdef:name="PdfExportConfig"
+            instance="string"
+            compression="!boolean=true"
+            quality="!string=high"
+            includeMetadata="!boolean=true"
+            includeOutline="!boolean=true"
+            linearized="!boolean=false">
+        <watermark xdef:name="PdfWatermark"
+                   text="!string"
+                   fontSize="!int=50"
+                   opacity="!decimal=0.3"
+                   angle="!int=45"
+                   color="!string=#CCCCCC"
+                   rows="!int=1"
+                   columns="!int=1"/>
+        <security xdef:name="PdfSecurity"
+                  ownerPassword="string"
+                  userPassword="string"
+                  allowPrint="!boolean=true"
+                  allowCopy="!boolean=true"
+                  allowModify="!boolean=true"/>
+    </export>
+
+</pdf>

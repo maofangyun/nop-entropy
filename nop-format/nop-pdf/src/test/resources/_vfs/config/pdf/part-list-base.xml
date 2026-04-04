@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PDF 基础模板 - 包含完整的销售报告结构和样式定义 -->
+<pdf x:schema="/nop/schema/pdf.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef"
+     id="part-list-base"
+     pageSize="A4"
+     pageOrientation="landscape"
+     marginTop="15"
+     marginBottom="15"
+     marginLeft="60"
+     marginRight="60"
+     encoding="UTF-8">
+
+    <description>安装托盘表PDF</description>
+
+    <metadata creationDate="${date}" modificationDate="${date}" compressed="true" encrypted="false"/>
+
+    <!-- 样式定义 -->
+    <styles>
+        <styleRefs>
+            <styleRef path="/config/pdf/sales-report-styles.xml"/>
+        </styleRefs>
+    </styles>
+
+    <!-- 页面定义 -->
+    <pages>
+        <page id="page-1">
+
+            <footer id="footer-para"
+                    pageMarginRight="60"
+                    pageMarginTop="15"
+                    totalMarginRight="200"
+                    totalMarginTop="15"
+                    className="table-header-cell">
+                <content>共${totalPages}页 | 第${pageNumber}页</content>
+            </footer>
+
+            <content>
+                <!-- 关键指标表格 -->
+                <table id="part-table" className="table">
+
+                    <header x:key-attr="id">
+                        <!-- 表头行 -->
+                        <row id="1" height="20">
+                            <cells>
+                                <cell text="大船研究院" colSpan="5" className="table-header-cell"/>
+                                <cell text="安装托盘表" colSpan="21" className="table-header-cell"/>
+                                <cell text="" colSpan="7" className="table-header-cell"/>
+                                <cell text="" colSpan="7" className="table-header-cell"/>
+                            </cells>
+                        </row>
+
+                        <!-- 占位符，用于锁定 Delta 中合并的 row id=2 和 row id=3 的渲染顺序 -->
+                        <row id="2" x:abstract="true" />
+                        <row id="3" x:abstract="true" />
+
+                        <row id="4" height="25">
+                            <cells>
+                                <cell text="序号" colSpan="1" className="table-header-cell"/>
+                                <cell text="安装件编号" colSpan="4" className="table-header-cell"/>
+                                <cell text="名称" colSpan="3" className="table-header-cell"/>
+                                <cell text="规格" colSpan="3" className="table-header-cell"/>
+                                <cell text="型号" colSpan="3" className="table-header-cell"/>
+                                <cell text="材质" colSpan="2" className="table-header-cell"/>
+                                <cell text="数量" colSpan="2" className="table-header-cell"/>
+                                <cell text="计量单位" colSpan="2" className="table-header-cell"/>
+                                <cell text="总重（kg）" colSpan="2" className="table-header-cell"/>
+                                <cell text="涂装面积（m2）" colSpan="2" className="table-header-cell"/>
+                                <cell text="涂装编码" colSpan="2" className="table-header-cell"/>
+                                <cell text="制作图号/订货清单号" colSpan="7" className="table-header-cell"/>
+                                <cell text="来处" colSpan="2" className="table-header-cell"/>
+                                <cell text="工种" colSpan="2" className="table-header-cell"/>
+                                <cell text="备注" colSpan="3" className="table-header-cell"/>
+                            </cells>
+                        </row>
+                    </header>
+                </table>
+
+            </content>
+        </page>
+    </pages>
+
+</pdf>

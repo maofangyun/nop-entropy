@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<imp x:schema="/nop/schema/excel/imp.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef"
+     defaultStripText="true">
+    <sheets>
+        <sheet name="TestEntity" field="TestEntity">
+            <fields>
+                <field name="id" displayName="唯一标识">
+                    <schema stdDomain="string"/>
+                </field>
+
+                <field name="basicInfo" displayName="基本信息">
+                    <fields>
+                        <field name="profile" displayName="个人资料">
+                            <fields>
+                                <field name="userName" displayName="姓名">
+                                    <schema stdDomain="string"/>
+                                </field>
+                            </fields>
+                        </field>
+
+                        <field name="genderGroup" displayName="性别">
+                            <fields>
+                                <field name="gender" displayName="性别">
+                                    <schema stdDomain="string" dict="sys/gender_dict"/>
+                                </field>
+                            </fields>
+                        </field>
+
+                        <field name="departmentGroup" displayName="所属部门">
+                            <fields>
+                                <field name="departmentId" displayName="所属部门">
+                                    <schema stdDomain="string"/>
+                                </field>
+                            </fields>
+                        </field>
+                    </fields>
+                </field>
+            </fields>
+        </sheet>
+    </sheets>
+</imp>

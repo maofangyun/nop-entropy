@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lib x:schema="/nop/schema/xlib.xdef" xmlns:x="/nop/schema/xdsl.xdef" xmlns:c="c">
+    <tags>
+        <GenSalesDataRows outputMode="node">
+            <attr name="salesData" type="List" mandatory="true">
+                <description>销售数据集合，每个元素包含category, target, actual, achievement, achievementNum等属性</description>
+            </attr>
+            
+            <source>
+                <c:script>
+                    import java.text.DecimalFormat;
+                    import java.lang.Double;
+                    import io.nop.xlang.api.XLang;
+                    
+                    let actualSum = 0.0;
+                    let targetSum = 0.0;
+                    if (salesData != null) {
+                        for (let i = 0; i &lt; salesData.size(); i++) {
+                            let data = salesData.get(i);
+                            if (data.actual != null) {
+                                actualSum += Double.parseDouble(data.actual.toString().replace(',', ''));
+                            }
+                            if (data.target != null) {
+                                targetSum += Double.parseDouble(data.target.toString().replace(',', ''));
+                            }
+                        }
+                    }
+                    let ach = targetSum == 0 ? 0.0 : actualSum / targetSum;
+                    
+                    let df = new DecimalFormat("#,##0");
+                    let dfPct = new DecimalFormat("#,##0.#%");
+
+                    assign("totalSales", df.format(actualSum));
+                    assign("targetSales", df.format(targetSum));
+                    assign("achievement", dfPct.format(ach));
+                </c:script>
+                <c:for var="data" items="${salesData}">
+                    <row>
+                        <cells>
+                            <cell text="${data.category}" fontSize="12" className="table-cell"/>
+                            <cell text="${data.target}" fontSize="12" align="right" className="table-cell"/>
+                            <cell text="${data.actual}" fontSize="12" align="right" className="table-cell"/>
+                            <cell text="${data.achievement}" fontSize="12" color="#00ff00" align="center" className="table-cell" xpl:if="data.achievementNum >= 100"/>
+                            <cell text="${data.achievement}" fontSize="12" color="#ff0000" align="center" className="table-cell" xpl:if="data.achievementNum &lt; 100"/>
+                        </cells>
+                    </row>
+                </c:for>
+            </source>
+        </GenSalesDataRows>
+    </tags>
+</lib>

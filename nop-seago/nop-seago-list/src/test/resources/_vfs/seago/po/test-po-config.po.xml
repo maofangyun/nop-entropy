@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<poConfig xmlns:x="/nop/schema/xdsl.xdef"
+          x:schema="/nop/schema/seago/po.xdef"
+          packageName="com.seago.demo">
+
+    <pos>
+        <po name="TestEntity" comment="测试">
+            <props>
+                <prop name="id" type="string" excelHeader="唯一标识"/>
+                <prop name="userName" type="string" excelHeader="基本信息/个人资料/姓名"/>
+                <prop name="gender" type="string" excelHeader="基本信息/个人资料/性别" dict="sys/gender_dict"/>
+                <prop name="departmentId" type="string" excelHeader="基本信息/所属部门" listProvider="departmentApi"/>
+                <prop name="secretKey" type="string" hidden="true"/>
+            </props>
+        </po>
+    </pos>
+
+</poConfig>

@@ -1,0 +1,19 @@
+<pdf id="test-tags" x:schema="/nop/schema/pdf.xdef" xmlns:x="/nop/schema/xdsl.xdef">
+    <export compression="true">
+        <security userPassword="123" ownerPassword="abc" allowPrint="true"/>
+        <watermark text="NOP ENTROPY CONFIDENTIAL" fontSize="40" opacity="0.4" angle="45" color="#FFCCCC"/>
+    </export>
+    <pages>
+        <page id="page-1">
+            <content>
+                <paragraph><text>Test Tags</text></paragraph>
+                <image src="d:\IdeaProjects\nop-entropy\nop-format\nop-pdf\src\test\resources\test-image.png" width="100" height="100" align="center"/>
+                <chart type="bar" title="Test Chart" width="400" height="300">
+                    <config/>
+                    <data/>
+                </chart>
+                <spacer height="20"/>
+            </content>
+        </page>
+    </pages>
+</pdf>

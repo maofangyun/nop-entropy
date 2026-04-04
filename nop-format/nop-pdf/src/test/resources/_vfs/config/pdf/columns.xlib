@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lib x:schema="/nop/schema/xlib.xdef" xmlns:x="/nop/schema/xdsl.xdef" xmlns:c="c">
+    <tags>
+        <GenColumnsForPartList outputMode="node">
+            <attr name="widthTotal" type="Integer" mandatory="true">
+                <description>总列宽</description>
+            </attr>
+            <attr name="widthUnit" type="Integer" mandatory="true">
+                <description>单元列宽</description>
+            </attr>
+            <source>
+                <c:script>
+                    let widthPercentage = widthUnit / widthTotal;
+                    let count = widthTotal / widthUnit;
+                </c:script>
+                <columns>
+                    <c:for var="index" begin="0" end="${count - 1}">
+                        <column index="${index}" width="${widthPercentage}"/>
+                    </c:for>
+                </columns>
+            </source>
+        </GenColumnsForPartList>
+    </tags>
+</lib>
