@@ -1,6 +1,5 @@
 <lib x:schema="/nop/schema/xlib.xdef"
-     xmlns:x="/nop/schema/xdsl.xdef" xmlns:thisLib="thisLib" xmlns:c="c" xmlns:xpl="xpl"
-     xmlns:po-excel-common="po-excel-common">
+     xmlns:x="/nop/schema/xdsl.xdef" xmlns:thisLib="thisLib" xmlns:c="c" xmlns:xpl="xpl">
 
     <tags>
         <!--

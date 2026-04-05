@@ -26,8 +26,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 核心类：动态解析 PoInfo 模型转换为 Nop 框架原生支持的 imp.xml DSL 节点或 ExcelWorkbook。
@@ -36,8 +38,48 @@ public class PoExcelHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(PoExcelHelper.class);
 
+    /**
+     * 收集 PoConfig 中所有 PoInfo 属性引用的字典名称
+     */
+    public static Set<String> collectDictNames(PoConfig poConfig) {
+        Set<String> dictNames = new HashSet<>();
+        if (poConfig != null && poConfig.getPos() != null) {
+            for (PoInfo po : poConfig.getPos()) {
+                dictNames.addAll(collectDictNames(po));
+            }
+        }
+        return dictNames;
+    }
+
+    /**
+     * 收集单个 PoInfo 中引用的所有字典名称
+     */
+    public static Set<String> collectDictNames(PoInfo poInfo) {
+        Set<String> dictNames = new HashSet<>();
+        if (poInfo != null && poInfo.getProps() != null) {
+            for (PropInfo prop : poInfo.getProps()) {
+                String dict = prop.getDict();
+                if (dict != null && !dict.trim().isEmpty()) {
+                    dictNames.add(dict.trim());
+                }
+            }
+        }
+        return dictNames;
+    }
+
     public static List<Map<String, Object>> parseExcel(PoConfig poConfig, String poName, IResource resource) {
+        return parseExcel(poConfig, poName, resource, null);
+    }
+
+    public static List<Map<String, Object>> parseExcel(PoConfig poConfig, String poName, IResource resource, IPoDictService dictService) {
         LOG.info("PoExcelHelper.parseExcel: poName={}, resource={}", poName, resource);
+
+        // 1. 动态生成字典文件
+        if (dictService != null) {
+            Set<String> dictNames = collectDictNames(poConfig);
+            new PoDictGenerator(dictService).generateDictFiles(dictNames);
+        }
+
         XNode impNode = buildImportModelNode(poConfig);
 
         ImportModel importModel = (ImportModel) DslModelHelper.parseDslNode("/nop/schema/excel/imp.xdef", impNode);
@@ -86,16 +128,27 @@ public class PoExcelHelper {
         return file;
     }
 
+    public static ExcelWorkbook buildExportWorkbook(PoInfo poInfo, List<?> data) {
+        return buildExportWorkbook(poInfo, data, null);
+    }
+
     /**
      * 将 PoInfo 模型转换为用于导出的 ExcelWorkbook 对象。
      */
-    public static ExcelWorkbook buildExportWorkbook(PoInfo poInfo, List<?> data) {
+    public static ExcelWorkbook buildExportWorkbook(PoInfo poInfo, List<?> data, IPoDictService dictService) {
         if (poInfo == null) {
             return null;
         }
         String poName = poInfo.getName();
         int dataSize = data != null ? data.size() : 0;
         LOG.info("PoExcelHelper.buildExportWorkbook: po={}, dataSize={}", poName, dataSize);
+
+        // 1. 动态生成字典文件
+        if (dictService != null) {
+            Set<String> dictNames = collectDictNames(poInfo);
+            new PoDictGenerator(dictService).generateDictFiles(dictNames);
+        }
+
         try {
             IResource xgenResource = VirtualFileSystem.instance()
                     .getResource("/nop/excel/po-to-export.workbook.xml.xgen");
@@ -117,7 +170,11 @@ public class PoExcelHelper {
     }
 
     public static File buildExportWorkbookFile(PoInfo poInfo, List<?> data) {
-        ExcelWorkbook excelWorkbook = buildExportWorkbook(poInfo, data);
+        return buildExportWorkbookFile(poInfo, data, null);
+    }
+
+    public static File buildExportWorkbookFile(PoInfo poInfo, List<?> data, IPoDictService dictService) {
+        ExcelWorkbook excelWorkbook = buildExportWorkbook(poInfo, data, dictService);
         File file = new File(System.getProperty("java.io.tmpdir"), "test.xlsx");
         LOG.info("PoExcelHelper.buildExportWorkbookFile: saving excel to {}", file.getAbsolutePath());
         ExcelHelper.saveExcel(new FileResource(file), excelWorkbook);

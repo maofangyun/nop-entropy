@@ -18,13 +18,17 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static io.nop.core.CoreConfigs.CFG_DICT_RETURN_NORMALIZED_LABEL;
 import static io.nop.core.CoreConfigs.CFG_INCLUDE_CURRENT_PROJECT_RESOURCES;
@@ -34,6 +38,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class PoExcelHelperTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PoExcelHelperTest.class);
 
     @BeforeAll
     public static void init() {
@@ -51,25 +57,45 @@ public class PoExcelHelperTest {
         return (PoConfig) ResourceComponentManager.instance().loadComponentModel("/seago/po/test-po-config.po.xml");
     }
 
+    @Test
+    public void testBuildImportModelFile() {
+        PoConfig poConfig = buildTestPoConfig();
+        File file = PoExcelHelper.buildImportModelFile(poConfig);
+        Assertions.assertTrue(file.exists());
+    }
+
 
     @Test
-    public void testBuildExportModelFile() {
+    public void testBuildExportWithDynamicDict() {
         PoConfig poConfig = buildTestPoConfig();
         PoInfo poInfo = poConfig.getPos().get(0);
 
-        // 准备一些导出数据
         List<Map<String, Object>> data = new ArrayList<>();
         Map<String, Object> row = new HashMap<>();
         row.put("id", "1001");
-        row.put("userName", "ZhangSan");
         row.put("gender", "1");
         data.add(row);
 
-        ExcelWorkbook excelWorkbook = PoExcelHelper.buildExportWorkbook(poInfo, data);
-        IResource resource = ResourceHelper.resolve("/seago/po/test.xlsx");
-        ExcelHelper.saveExcel(resource, excelWorkbook);
+        // 模拟字典服务
+        IPoDictService mockDictService = dictName -> {
+            if ("sys/gender_dict".equals(dictName)) {
+                List<PoDictOption> options = new ArrayList<>();
+                options.add(new PoDictOption("1", "男"));
+                options.add(new PoDictOption("2", "女"));
+                return options;
+            }
+            return Collections.emptyList();
+        };
+
+        // 收集并验证字典名
+        Set<String> dictNames = PoExcelHelper.collectDictNames(poInfo);
+        assertTrue(dictNames.contains("sys/gender_dict"));
+
+        // 执行工作簿构建（会触发字典文件生成逻辑）
+        ExcelWorkbook excelWorkbook = PoExcelHelper.buildExportWorkbook(poInfo, data, mockDictService);
+        assertNotNull(excelWorkbook);
         
-        assertTrue(resource.exists());
+        LOG.info("PoExcelHelperTest: Dynamic dict test finished successfully");
     }
 
     @Test
@@ -80,7 +106,8 @@ public class PoExcelHelperTest {
         // 不再支持 dictService 处理字典转换
         List<Map<String, Object>> result = PoExcelHelper.parseExcel(poConfig, "TestEntity", resource);
 
-        assertEquals(3, result.size());
+        assertNotNull(result, "Result list should not be null");
+        assertEquals(3,result.size());
         
         Map<String, Object> firstRow = result.get(0);
         // 验证关键字段解析
