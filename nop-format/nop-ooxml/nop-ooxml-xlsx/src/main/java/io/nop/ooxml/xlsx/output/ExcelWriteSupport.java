@@ -408,7 +408,7 @@ public class ExcelWriteSupport {
             int showInputMessage = Boolean.FALSE.equals(validation.getShowInputMessage()) ? 0 : 1;
             int showErrorMessage = Boolean.FALSE.equals(validation.getShowErrorMessage()) ? 0 : 1;
             Integer showDropDown = validation.getShowDropDown() == null ? null :
-                    (Boolean.TRUE.equals(validation.getShowDropDown()) ? 1 : 0);
+                    (Boolean.TRUE.equals(validation.getShowDropDown()) ? 0 : 1);
             
             out.beginNode(null, "dataValidation", attrs("type", validation.getType(),
                     "allowBlank", allowBlank,

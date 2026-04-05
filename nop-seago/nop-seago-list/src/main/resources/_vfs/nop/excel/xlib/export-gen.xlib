@@ -263,6 +263,36 @@
                                     </c:for>
                                 </rows>
                             </table>
+
+                            <dataValidations>
+                                <c:for var="prop" index="colIdx" items="${visibleProps}">
+                                    <c:if test="${isNotBlank(prop.dict)}">
+                                        <c:script><![CDATA[
+                                            import io.nop.core.dict.DictProvider;
+                                            
+                                            const dict = DictProvider.instance().getDict(null, prop.dict, null, null);
+                                            let labels = dict ? dict.getLabels().join(',') : null;
+                                            if (labels != null) {
+                                                if (labels.length() > 250) {
+                                                    labels = labels.substring(0, 250);
+                                                    const lastComma = labels.lastIndexOf(',');
+                                                    if (lastComma > 0) labels = labels.substring(0, lastComma);
+                                                }
+                                                // 关键：在脚本内先构造好带引号的字符串。
+                                                // 在XPL输出到XML时，${labels}会被作为字符串值放入formula1节点
+                                                labels = '"' + labels + '"';
+                                            }
+                                            const colLetter = PoExcelHelper.getColLetter(colIdx);
+                                            const sqref = colLetter + (headerRowCount + 1) + ":" + colLetter + "1048576";
+                                        ]]></c:script>
+                                        <c:if test="${labels != null}">
+                                            <dataValidation sqref="${sqref}" type="list" allowBlank="true" showDropDown="true">
+                                                <formula1>${labels}</formula1>
+                                            </dataValidation>
+                                        </c:if>
+                                    </c:if>
+                                </c:for>
+                            </dataValidations>
                         </sheet>
                     </sheets>
                 </workbook>

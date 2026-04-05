@@ -111,4 +111,18 @@ public class PoExcelHelper {
         String label = dict.getLabelByValue(value);
         return label != null ? label : String.valueOf(value);
     }
+
+    /**
+     * 将列索引转换为 Excel 列名字母（A, B, ..., Z, AA, AB, ...）
+     */
+    static String getColLetter(int colIndex) {
+        StringBuilder sb = new StringBuilder();
+        int n = colIndex;
+        while (n >= 0) {
+            sb.insert(0, (char) ('A' + (n % 26)));
+            n = n / 26 - 1;
+        }
+        return sb.toString();
+    }
+
 }
