@@ -51,12 +51,6 @@ public class PoExcelHelperTest {
         return (PoConfig) ResourceComponentManager.instance().loadComponentModel("/seago/po/test-po-config.po.xml");
     }
 
-    @Test
-    public void testBuildImportModelFile() {
-        PoConfig poConfig = buildTestPoConfig();
-        File file = PoExcelHelper.buildImportModelFile(poConfig);
-        Assertions.assertTrue(file.exists());
-    }
 
     @Test
     public void testBuildExportModelFile() {
@@ -86,8 +80,7 @@ public class PoExcelHelperTest {
         // 不再支持 dictService 处理字典转换
         List<Map<String, Object>> result = PoExcelHelper.parseExcel(poConfig, "TestEntity", resource);
 
-        assertNotNull(result, "Result list should not be null");
-        assertTrue(result.size() > 0, "Result list should not be empty");
+        assertEquals(3, result.size());
         
         Map<String, Object> firstRow = result.get(0);
         // 验证关键字段解析

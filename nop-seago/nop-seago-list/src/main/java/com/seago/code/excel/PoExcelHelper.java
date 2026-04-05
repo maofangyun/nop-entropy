@@ -7,11 +7,13 @@ import io.nop.api.core.exceptions.NopException;
 import io.nop.commons.util.FileHelper;
 import io.nop.core.lang.eval.EvalScopeImpl;
 import io.nop.core.lang.xml.XNode;
+import io.nop.core.model.object.DynamicObject;
 import io.nop.core.resource.IResource;
 import io.nop.core.resource.impl.FileResource;
 import io.nop.core.resource.VirtualFileSystem;
 import io.nop.excel.imp.model.ImportModel;
 import io.nop.excel.model.ExcelWorkbook;
+import io.nop.ooxml.xlsx.imp.XlsxObjectLoader;
 import io.nop.ooxml.xlsx.util.ExcelHelper;
 import io.nop.xlang.api.XLang;
 import io.nop.xlang.ast.XLangOutputMode;
@@ -35,34 +37,43 @@ public class PoExcelHelper {
     private static final Logger LOG = LoggerFactory.getLogger(PoExcelHelper.class);
 
     public static List<Map<String, Object>> parseExcel(PoConfig poConfig, String poName, IResource resource) {
+        LOG.info("PoExcelHelper.parseExcel: poName={}, resource={}", poName, resource);
         XNode impNode = buildImportModelNode(poConfig);
 
         ImportModel importModel = (ImportModel) DslModelHelper.parseDslNode("/nop/schema/excel/imp.xdef", impNode);
-        io.nop.ooxml.xlsx.imp.XlsxObjectLoader loader = new io.nop.ooxml.xlsx.imp.XlsxObjectLoader(importModel);
+        XlsxObjectLoader loader = new XlsxObjectLoader(importModel);
         loader.setReturnDynamicObject(true);
 
         Object result = loader.parseFromResource(resource, XLang.newEvalScope());
-        Object data = io.nop.core.reflect.bean.BeanTool.getProperty(result, poName);
-        if (!(data instanceof List)) return Collections.emptyList();
+        Object data = BeanTool.getProperty(result, poName);
+        if (!(data instanceof List)) {
+            LOG.warn("PoExcelHelper.parseExcel: result data is not a list for poName={}", poName);
+            return Collections.emptyList();
+        }
 
         List<Map<String, Object>> list = new ArrayList<>();
         for (Object item : (List<?>) data) {
             if (item instanceof Map) {
                 list.add(new HashMap<>((Map<String, Object>) item));
-            } else if (item instanceof io.nop.core.model.object.DynamicObject) {
-                list.add(new HashMap<>(((io.nop.core.model.object.DynamicObject) item).toMap()));
+            } else if (item instanceof DynamicObject) {
+                list.add(new HashMap<>(((DynamicObject) item).toMap()));
             }
         }
+        LOG.info("PoExcelHelper.parseExcel: finished, result size={}", list.size());
         return list;
     }
 
     public static XNode buildImportModelNode(PoConfig poConfig) {
+        LOG.debug("PoExcelHelper.buildImportModelNode: starting XPL generation");
         try {
             IResource xgenResource = VirtualFileSystem.instance().getResource("/nop/excel/po-to-imp.imp.xml.xgen");
             EvalScopeImpl evalScope = new EvalScopeImpl();
             evalScope.setLocalValue("poConfig", poConfig);
-            return (XNode) XLang.parseXpl(xgenResource, XLangOutputMode.node).invoke(evalScope);
+            XNode node = (XNode) XLang.parseXpl(xgenResource, XLangOutputMode.node).invoke(evalScope);
+            LOG.debug("PoExcelHelper.buildImportModelNode: finished generation");
+            return node;
         } catch (Exception e) {
+            LOG.error("PoExcelHelper.buildImportModelNode: error generating import model node", e);
             throw NopException.adapt(e);
         }
     }
@@ -70,6 +81,7 @@ public class PoExcelHelper {
     public static File buildImportModelFile(PoConfig poConfig) {
         XNode node = buildImportModelNode(poConfig);
         File file = new File(System.getProperty("java.io.tmpdir"), "imp.xml");
+        LOG.info("PoExcelHelper.buildImportModelFile: saving to {}", file.getAbsolutePath());
         FileHelper.writeText(file, node.xml(), "UTF-8");
         return file;
     }
@@ -78,6 +90,12 @@ public class PoExcelHelper {
      * 将 PoInfo 模型转换为用于导出的 ExcelWorkbook 对象。
      */
     public static ExcelWorkbook buildExportWorkbook(PoInfo poInfo, List<?> data) {
+        if (poInfo == null) {
+            return null;
+        }
+        String poName = poInfo.getName();
+        int dataSize = data != null ? data.size() : 0;
+        LOG.info("PoExcelHelper.buildExportWorkbook: po={}, dataSize={}", poName, dataSize);
         try {
             IResource xgenResource = VirtualFileSystem.instance()
                     .getResource("/nop/excel/po-to-export.workbook.xml.xgen");
@@ -88,10 +106,12 @@ public class PoExcelHelper {
 
             // 生成 Workbook XML 节点
             XNode workbookNode = (XNode) XLang.parseXpl(xgenResource, XLangOutputMode.node).invoke(evalScope);
-            
             // 解析为 ExcelWorkbook 对象
-            return (ExcelWorkbook) DslModelHelper.parseDslNode("/nop/schema/excel/workbook.xdef", workbookNode);
+            ExcelWorkbook workbook = (ExcelWorkbook) DslModelHelper.parseDslNode("/nop/schema/excel/workbook.xdef", workbookNode);
+            LOG.info("PoExcelHelper.buildExportWorkbook: finished building workbook");
+            return workbook;
         } catch (Exception e) {
+            LOG.error("PoExcelHelper.buildExportWorkbook: error building export workbook", e);
             throw NopException.adapt(e);
         }
     }
@@ -99,30 +119,9 @@ public class PoExcelHelper {
     public static File buildExportWorkbookFile(PoInfo poInfo, List<?> data) {
         ExcelWorkbook excelWorkbook = buildExportWorkbook(poInfo, data);
         File file = new File(System.getProperty("java.io.tmpdir"), "test.xlsx");
+        LOG.info("PoExcelHelper.buildExportWorkbookFile: saving excel to {}", file.getAbsolutePath());
         ExcelHelper.saveExcel(new FileResource(file), excelWorkbook);
         return file;
-    }
-
-
-    public static String getDictLabel(String dictName, Object value) {
-        if (value == null) return null;
-        io.nop.api.core.beans.DictBean dict = io.nop.core.dict.DictProvider.instance().getDict(null, dictName, null, null);
-        if (dict == null) return String.valueOf(value);
-        String label = dict.getLabelByValue(value);
-        return label != null ? label : String.valueOf(value);
-    }
-
-    /**
-     * 将列索引转换为 Excel 列名字母（A, B, ..., Z, AA, AB, ...）
-     */
-    static String getColLetter(int colIndex) {
-        StringBuilder sb = new StringBuilder();
-        int n = colIndex;
-        while (n >= 0) {
-            sb.insert(0, (char) ('A' + (n % 26)));
-            n = n / 26 - 1;
-        }
-        return sb.toString();
     }
 
 }

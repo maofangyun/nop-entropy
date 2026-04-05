@@ -1,235 +1,38 @@
 <lib x:schema="/nop/schema/xlib.xdef"
-     xmlns:x="/nop/schema/xdsl.xdef" xmlns:thisLib="thisLib" xmlns:c="c">
+     xmlns:x="/nop/schema/xdsl.xdef" xmlns:thisLib="thisLib" xmlns:c="c" xmlns:xpl="xpl"
+     xmlns:po-excel-common="po-excel-common">
 
     <tags>
+        <!--
+          生成 Excel 导出工作簿对象。
+          1. 预处理 Po 属性，过滤可见字段。
+          2. 计算多行合并表头。
+          3. 构造 workbook 节点，包含样式、工作表、数据行及下拉框校验。
+          @attr po PoInfo 实体定义模型
+          @attr data 待导出的数据 List<Map>
+          @return ExcelWorkbook 节点
+        -->
         <GenWorkbook outputMode="xml">
             <attr name="po"/>
             <attr name="data"/>
             <source>
-                <c:script><![CDATA[
-                    import java.lang.Boolean;
-                    import java.util.ArrayList;
-                    import java.util.Collections;
-                    import java.util.LinkedHashMap;
-                    import io.nop.core.reflect.bean.BeanTool;
-                    import com.seago.code.excel.PoExcelHelper;
+                <!-- 1. 获取可见属性并计算表头合并信息 -->
+                <po-excel-common:GetVisibleProps props="${po.props}" xpl:return="visibleProps"
+                                                 xpl:lib="/nop/excel/xlib/po-excel-common.xlib" />
+                <po-excel-common:ComputeHeaderInfo props="${visibleProps}" xpl:return="headerInfo"
+                                                   xpl:lib="/nop/excel/xlib/po-excel-common.xlib" />
 
-                    const isNotBlank = (str) => {
-                        return str != null && str.trim().length() > 0;
-                    };
-
-                    const eq = (a, b) => {
-                        if (a == null) return b == null;
-                        return a == b;
-                    };
-
-                    const getVisibleProps = (props) => {
-                        if (props == null) return [];
-                        return props.filter(prop => prop != null && !Boolean.TRUE.equals(prop.hidden));
-                    };
-
-                    const buildFieldDisplayName = (prop) => {
-                        if (isNotBlank(prop.excelHeader)) {
-                            const parts = prop.excelHeader.split('/');
-                            return parts[parts.length - 1].trim();
-                        }
-                        if (isNotBlank(prop.comment)) {
-                            return prop.comment.trim();
-                        }
-                        return prop.name;
-                    };
-
-                    const splitHeaderParts = (prop) => {
-                        const parts = new ArrayList();
-                        if (isNotBlank(prop.excelHeader)) {
-                            for (let part of prop.excelHeader.split('/')) {
-                                if (isNotBlank(part)) {
-                                    parts.add(part.trim());
-                                }
-                            }
-                        }
-                        if (parts.isEmpty()) {
-                            parts.add(buildFieldDisplayName(prop));
-                        }
-                        return parts;
-                    };
-
-                    const calculateHeaderRowCount = (props) => {
-                        let maxDepth = 1;
-                        for (let prop of props) {
-                            const depth = splitHeaderParts(prop).size();
-                            if (depth > maxDepth) {
-                                maxDepth = depth;
-                            }
-                        }
-                        return maxDepth;
-                    };
-
-                    const buildHeaderLevels = (props, headerRowCount) => {
-                        const headerLevels = new ArrayList();
-                        for (let prop of props) {
-                            const parts = splitHeaderParts(prop);
-                            const levels = new ArrayList();
-                            for (let i = 0; i < parts.size(); i++) {
-                                levels.add(parts.get(i));
-                            }
-                            while (levels.size() < headerRowCount) {
-                                levels.add(levels.get(levels.size() - 1));
-                            }
-                            headerLevels.add(levels);
-                        }
-                        return headerLevels;
-                    };
-
-                    const isCoveredByVerticalMerge = (headerGrid, rowIdx, colIdx) => {
-                        for (let r = 0; r < rowIdx; r++) {
-                            const row = headerGrid.get(r);
-                            for (let c = 0; c < row.size(); c++) {
-                                const cellMeta = row.get(c);
-                                if (cellMeta == null) {
-                                    continue;
-                                }
-                                const mergeDown = cellMeta.mergeDown != null ? cellMeta.mergeDown : 0;
-                                const mergeAcross = cellMeta.mergeAcross != null ? cellMeta.mergeAcross : 0;
-                                if (mergeDown > 0 && r + mergeDown >= rowIdx && c <= colIdx && c + mergeAcross >= colIdx) {
-                                    return true;
-                                }
-                            }
-                        }
-                        return false;
-                    };
-
-                    const buildHeaderRows = (props, headerRowCount) => {
-                        const colCount = props.size();
-                        const headerLevels = buildHeaderLevels(props, headerRowCount);
-                        const headerGrid = new ArrayList();
-                        const headerRows = new ArrayList();
-
-                        for (let rowIdx = 0; rowIdx < headerRowCount; rowIdx++) {
-                            const gridRow = new ArrayList();
-                            for (let i = 0; i < colCount; i++) {
-                                gridRow.add(null);
-                            }
-
-                            const actualRow = new ArrayList();
-                            let col = 0;
-                            while (col < colCount) {
-                                if (isCoveredByVerticalMerge(headerGrid, rowIdx, col)) {
-                                    actualRow.add({
-                                        value: null,
-                                        mergeAcross: 0,
-                                        mergeDown: 0
-                                    });
-                                    col++;
-                                    continue;
-                                }
-
-                                const currentLabel = headerLevels.get(col).get(rowIdx);
-                                let mergeAcross = 0;
-                                let nextCol = col + 1;
-                                while (nextCol < colCount && eq(headerLevels.get(nextCol).get(rowIdx), currentLabel)) {
-                                    let sameGroup = true;
-                                    for (let k = 0; k < rowIdx; k++) {
-                                        if (!eq(headerLevels.get(col).get(k), headerLevels.get(nextCol).get(k))) {
-                                            sameGroup = false;
-                                            break;
-                                        }
-                                    }
-                                    if (!sameGroup) {
-                                        break;
-                                    }
-                                    mergeAcross++;
-                                    nextCol++;
-                                }
-
-                                let mergeDown = 0;
-                                for (let belowRow = rowIdx + 1; belowRow < headerRowCount; belowRow++) {
-                                    let allColsSame = true;
-                                    for (let c = col; c < nextCol; c++) {
-                                        if (!eq(headerLevels.get(c).get(belowRow), currentLabel)) {
-                                            allColsSame = false;
-                                            break;
-                                        }
-                                    }
-                                    if (allColsSame) {
-                                        mergeDown++;
-                                    } else {
-                                        break;
-                                    }
-                                }
-
-                                const cellMeta = {
-                                    value: currentLabel,
-                                    mergeAcross: mergeAcross,
-                                    mergeDown: mergeDown
-                                };
-                                gridRow.set(col, cellMeta);
-                                actualRow.add(cellMeta);
-                                
-                                // Output placeholders for the columns covered by mergeAcross
-                                for (let i = 1; i <= mergeAcross; i++) {
-                                    actualRow.add({
-                                        value: null,
-                                        mergeAcross: 0,
-                                        mergeDown: 0
-                                    });
-                                }
-
-                                col = nextCol;
-                            }
-
-                            headerGrid.add(gridRow);
-                            headerRows.add(actualRow);
-                        }
-                        return headerRows;
-                    };
-
-                    const buildDataRows = (data, props) => {
-                        const rows = new ArrayList();
-                        if (data == null) {
-                            return rows;
-                        }
-                        for (let item of data) {
-                            const row = new ArrayList();
-                            for (let prop of props) {
-                                let value = BeanTool.getProperty(item, prop.name);
-                                if (isNotBlank(prop.dict)) {
-                                    value = PoExcelHelper.getDictLabel(prop.dict, value);
-                                }
-                                row.add(value);
-                            }
-                            rows.add(row);
-                        }
-                        return rows;
-                    };
-
-                    const visibleProps = getVisibleProps(po.props);
-                    const headerRowCount = calculateHeaderRowCount(visibleProps);
-                    const headerRows = buildHeaderRows(visibleProps, headerRowCount);
-                    const dataRows = buildDataRows(data, visibleProps);
-                ]]></c:script>
                 <workbook x:schema="/nop/schema/excel/workbook.xdef"
                           xmlns:x="/nop/schema/xdsl.xdef">
-                    <styles>
-                        <style id="header" name="Header" horizontalAlign="center" verticalAlign="center" fillFgColor="C0C0C0" fillPattern="solid" wrapText="true">
-                            <font bold="true"/>
-                            <topBorder type="thin" color="000000"/>
-                            <bottomBorder type="thin" color="000000"/>
-                            <leftBorder type="thin" color="000000"/>
-                            <rightBorder type="thin" color="000000"/>
-                        </style>
-                        <style id="data" name="Data">
-                            <topBorder type="thin" color="000000"/>
-                            <bottomBorder type="thin" color="000000"/>
-                            <leftBorder type="thin" color="000000"/>
-                            <rightBorder type="thin" color="000000"/>
-                        </style>
-                    </styles>
+                    <!-- 2. 生成全局样式 -->
+                    <thisLib:GenStyles/>
+
                     <sheets>
                         <sheet name="${po.name != null ? po.name : 'Sheet1'}">
                             <table>
                                 <rows>
-                                    <c:for var="headerRow" items="${headerRows}">
+                                    <!-- 3. 生成表头合并行 -->
+                                    <c:for var="headerRow" items="${headerInfo.headerRows}">
                                         <row>
                                             <cells>
                                                 <c:for var="cellMeta" items="${headerRow}">
@@ -245,58 +48,124 @@
                                         </row>
                                     </c:for>
 
-                                    <c:for var="dataRow" index="rowIdx" items="${dataRows}">
-                                        <row>
-                                            <cells>
-                                                <c:for var="cellValue" index="colIdx" items="${dataRow}">
-                                                    <cell styleId="data">
-                                                        <c:if test="${cellValue != null}">
-                                                            <value>${cellValue}</value>
-                                                        </c:if>
-                                                        <c:if test="${isNotBlank(visibleProps.get(colIdx).dict)}">
-                                                            <model dict="${visibleProps.get(colIdx).dict}"/>
-                                                        </c:if>
-                                                    </cell>
-                                                </c:for>
-                                            </cells>
-                                        </row>
-                                    </c:for>
+                                    <!-- 4. 生成业务数据行 -->
+                                    <thisLib:GenDataRows data="${data}" props="${visibleProps}"/>
                                 </rows>
                             </table>
 
-                            <dataValidations>
-                                <c:for var="prop" index="colIdx" items="${visibleProps}">
-                                    <c:if test="${isNotBlank(prop.dict)}">
-                                        <c:script><![CDATA[
-                                            import io.nop.core.dict.DictProvider;
-                                            
-                                            const dict = DictProvider.instance().getDict(null, prop.dict, null, null);
-                                            let labels = dict ? dict.getLabels().join(',') : null;
-                                            if (labels != null) {
-                                                if (labels.length() > 250) {
-                                                    labels = labels.substring(0, 250);
-                                                    const lastComma = labels.lastIndexOf(',');
-                                                    if (lastComma > 0) labels = labels.substring(0, lastComma);
-                                                }
-                                                // 关键：在脚本内先构造好带引号的字符串。
-                                                // 在XPL输出到XML时，${labels}会被作为字符串值放入formula1节点
-                                                labels = '"' + labels + '"';
-                                            }
-                                            const colLetter = PoExcelHelper.getColLetter(colIdx);
-                                            const sqref = colLetter + (headerRowCount + 1) + ":" + colLetter + "1048576";
-                                        ]]></c:script>
-                                        <c:if test="${labels != null}">
-                                            <dataValidation sqref="${sqref}" type="list" allowBlank="true" showDropDown="true">
-                                                <formula1>${labels}</formula1>
-                                            </dataValidation>
-                                        </c:if>
-                                    </c:if>
-                                </c:for>
-                            </dataValidations>
+                            <!-- 5. 生成数据有效性校验（下拉框） -->
+                            <thisLib:GenDataValidations props="${visibleProps}" headerRowCount="${headerInfo.headerRowCount}"/>
                         </sheet>
                     </sheets>
                 </workbook>
             </source>
         </GenWorkbook>
+
+        <!--
+          定义 Excel 导出所用的基础样式。
+          包含 Header（加粗居中、背景灰色）和 Data（基础边框）。
+        -->
+        <GenStyles outputMode="xml">
+            <source>
+                <styles>
+                    <style id="header" name="Header" horizontalAlign="center" verticalAlign="center" fillFgColor="C0C0C0"
+                           fillPattern="solid" wrapText="true">
+                        <font bold="true"/>
+                        <topBorder type="thin" color="000000"/>
+                        <bottomBorder type="thin" color="000000"/>
+                        <leftBorder type="thin" color="000000"/>
+                        <rightBorder type="thin" color="000000"/>
+                    </style>
+                    <style id="data" name="Data">
+                        <topBorder type="thin" color="000000"/>
+                        <bottomBorder type="thin" color="000000"/>
+                        <leftBorder type="thin" color="000000"/>
+                        <rightBorder type="thin" color="000000"/>
+                    </style>
+                </styles>
+            </source>
+        </GenStyles>
+
+        <!--
+          循环生成业务数据行。
+          自动处理字典值的标签转换。
+          @attr data 业务数据列表
+          @attr props 字段定义列表
+        -->
+        <GenDataRows outputMode="xml">
+            <attr name="data"/>
+            <attr name="props"/>
+            <source>
+                <c:for var="item" items="${data}">
+                    <row>
+                        <cells>
+                            <c:for var="prop" items="${props}">
+                                <c:script><![CDATA[
+                                    import io.nop.core.reflect.bean.BeanTool;
+                                    // 动态获取属性值
+                                    let value = BeanTool.getProperty(item, prop.name);
+                                ]]></c:script>
+                                <!-- 字典标签转换 -->
+                                <po-excel-common:GetDictLabel dictName="${prop.dict}" value="${value}" xpl:return="label"
+                                                              xpl:lib="/nop/excel/xlib/po-excel-common.xlib" />
+                                <cell styleId="data">
+                                    <c:if test="${label != null}">
+                                        <value>${label}</value>
+                                    </c:if>
+                                    <!-- 标记单元格元数据，供后续导入解析参考 -->
+                                    <c:if test="${prop.dict != null &amp;&amp; prop.dict != ''}">
+                                        <model dict="${prop.dict}"/>
+                                    </c:if>
+                                </cell>
+                            </c:for>
+                        </cells>
+                    </row>
+                </c:for>
+            </source>
+        </GenDataRows>
+
+        <!--
+          生成 Excel 数据校验逻辑。
+          针对配置了 dict 的属性，在相应列自动生成下拉选择框。
+          @attr props 字段定义列表
+          @attr headerRowCount 表头占据的行数（用于计算数据区域起始行）
+        -->
+        <GenDataValidations outputMode="xml">
+            <attr name="props"/>
+            <attr name="headerRowCount"/>
+            <source>
+                <dataValidations>
+                    <c:for var="prop" index="colIdx" items="${props}">
+                        <c:if test="${prop.dict != null &amp;&amp; prop.dict != ''}">
+                            <c:script><![CDATA[
+                                import io.nop.core.dict.DictProvider;
+
+                                // 获取字典所有标签
+                                const dict = DictProvider.instance().getDict(null, prop.dict, null, null);
+                                let labels = dict ? dict.getLabels().join(',') : null;
+                                if (labels != null) {
+                                    // Excel 下拉列表字符串限制为 255 字符，此处截断并保持完整项
+                                    if (labels.length() > 250) {
+                                        labels = labels.substring(0, 250);
+                                        const lastComma = labels.lastIndexOf(',');
+                                        if (lastComma > 0) labels = labels.substring(0, lastComma);
+                                    }
+                                    labels = '"' + labels + '"';
+                                }
+                            ]]></c:script>
+                            <!-- 获取列字母 (A, B, C...) -->
+                            <po-excel-common:GetColLetter colIndex="${colIdx}" xpl:return="colLetter"
+                                                          xpl:lib="/nop/excel/xlib/po-excel-common.xlib" />
+                            <c:if test="${labels != null}">
+                                <!-- 计算校验区域，如 C4:C1048576 -->
+                                <dataValidation sqref="${colLetter + (headerRowCount + 1) + ':' + colLetter + '1048576'}" type="list" allowBlank="true" showDropDown="true">
+                                    <formula1>${labels}</formula1>
+                                </dataValidation>
+                            </c:if>
+                        </c:if>
+                    </c:for>
+                </dataValidations>
+            </source>
+        </GenDataValidations>
     </tags>
 </lib>

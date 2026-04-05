@@ -1,112 +1,33 @@
 <lib x:schema="/nop/schema/xlib.xdef"
-     xmlns:x="/nop/schema/xdsl.xdef" xmlns:thisLib="thisLib" xmlns:c="c" xmlns:xpl="xpl">
+     xmlns:x="/nop/schema/xdsl.xdef" xmlns:thisLib="thisLib" xmlns:c="c" xmlns:xpl="xpl"
+     xmlns:po-excel-common="po-excel-common">
 
     <tags>
+        <!--
+          生成导入/导出 Sheet 的配置信息。
+          将 Po 实体模型转换为 Nop imp 模型中的 sheet 节点定义。
+          1. 处理可见属性。
+          2. 计算字段元数据（包含类型映射、约束映射、字典配置）。
+          3. 识别并提取分组字段。
+          @attr po PoInfo 实体定义模型
+          @return imp 模型中的 sheet 节点
+        -->
         <GenSheetConfig outputMode="xml">
             <attr name="po"/>
             <source>
-                <c:script><![CDATA[
-                    import java.lang.Boolean;
-                    import java.util.ArrayList;
-                    import java.util.LinkedHashMap;
+                <!-- 1. 预处理：过滤隐藏属性、构建字段元数据及提取分组信息 -->
+                <po-excel-common:GetVisibleProps props="${po.props}" xpl:return="visibleProps"
+                                                 xpl:lib="/nop/excel/xlib/po-excel-common.xlib" />
+                <po-excel-common:BuildFieldMetas props="${visibleProps}" xpl:return="fieldMetas"
+                                                 xpl:lib="/nop/excel/xlib/po-excel-common.xlib" />
+                <po-excel-common:BuildGroupFields fieldMetas="${fieldMetas}" xpl:return="groupFields"
+                                                  xpl:lib="/nop/excel/xlib/po-excel-common.xlib" />
 
-                    const getVisibleProps = (props) => {
-                        if (props == null) return [];
-                        return props.filter(prop => prop != null && !Boolean.TRUE.equals(prop.hidden));
-                    };
-
-                    const isNotBlank = (str) => {
-                        return str != null && str.trim().length() > 0;
-                    };
-
-                    const toStdDomain = (type) => {
-                        if (type == null) return 'string';
-                        if (type == 'int' || type == 'integer') return 'int';
-                        if (type == 'long') return 'long';
-                        if (type == 'double' || type == 'float' || type == 'decimal' || type == 'number') return 'double';
-                        if (type == 'boolean') return 'boolean';
-                        if (type == 'date') return 'date';
-                        if (type == 'datetime' || type == 'timestamp') return 'datetime';
-                        return 'string';
-                    };
-
-                    const splitHeaderParts = (prop) => {
-                        const parts = new ArrayList();
-                        if (isNotBlank(prop.excelHeader)) {
-                            for (let part of prop.excelHeader.split('/')) {
-                                if (isNotBlank(part)) {
-                                    parts.add(part.trim());
-                                }
-                            }
-                        }
-                        if (parts.isEmpty()) {
-                            if (isNotBlank(prop.comment)) {
-                                parts.add(prop.comment.trim());
-                            } else {
-                                parts.add(prop.name);
-                            }
-                        }
-                        return parts;
-                    };
-
-                    const buildGroupDisplayName = (parts) => {
-                        if (parts.size() <= 1) {
-                            return null;
-                        }
-                        const labels = new ArrayList();
-                        for (let i = 0; i < parts.size() - 1; i++) {
-                            labels.add(parts.get(i));
-                        }
-                        return labels.join('/');
-                    };
-
-                    const buildLeafDisplayName = (parts) => {
-                        return parts.get(parts.size() - 1);
-                    };
-
-                    const sanitizeGroupName = (name) => {
-                        return '__group__' + name.replaceAll('[^A-Za-z0-9_]', '_');
-                    };
-
-                    const visibleProps = getVisibleProps(po.props);
-                    const groupFields = new LinkedHashMap();
-                    const fieldMetas = new ArrayList();
-
-                    for (let prop of visibleProps) {
-                        const parts = splitHeaderParts(prop);
-                        const leafDisplayName = buildLeafDisplayName(parts);
-                        const groupDisplayName = buildGroupDisplayName(parts);
-                        let groupName = null;
-                        if (isNotBlank(groupDisplayName)) {
-                            groupName = sanitizeGroupName(groupDisplayName);
-                            if (!groupFields.containsKey(groupName)) {
-                                groupFields.put(groupName, {
-                                    name: groupName,
-                                    displayName: groupDisplayName
-                                });
-                            }
-                        }
-
-                        fieldMetas.add({
-                            name: prop.name,
-                            displayName: leafDisplayName,
-                            stdDomain: toStdDomain(prop.type),
-                            groupField: groupName,
-                            mandatory: prop.mandatory,
-                            pattern: prop.pattern,
-                            min: prop.min,
-                            max: prop.max,
-                            precision: prop.precision,
-                            scale: prop.scale,
-                            minLength: prop.minLength,
-                            maxLength: prop.maxLength,
-                            dict: prop.dict
-                        });
-                    }
-                ]]></c:script>
+                <!-- 2. 输出 sheet 节点 -->
                 <sheet name="${po.comment != null ? po.comment : 'Sheet1'}"
                        field="${po.name}" list="true">
                     <fields>
+                        <!-- 3. 循环输出各字段的 field 定义 -->
                         <c:for var="fieldMeta" items="${fieldMetas}">
                             <field name="${fieldMeta.name}" displayName="${fieldMeta.displayName}" groupField="${fieldMeta.groupField}"
                                    mandatory="${fieldMeta.mandatory}" importDictLabel="${fieldMeta.dict != null}">
@@ -117,6 +38,7 @@
                                         dict="${fieldMeta.dict}"/>
                             </field>
                         </c:for>
+                        <!-- 4. 输出由表头路径自动生成的虚拟分组字段 -->
                         <c:for var="groupField" items="${groupFields.values()}">
                             <field name="${groupField.name}" displayName="${groupField.displayName}">
                                 <schema stdDomain="string"/>

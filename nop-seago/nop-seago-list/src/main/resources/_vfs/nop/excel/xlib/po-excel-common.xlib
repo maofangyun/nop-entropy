@@ -1,0 +1,262 @@
+<lib x:schema="/nop/schema/xlib.xdef"
+     xmlns:x="/nop/schema/xdsl.xdef" xmlns:c="c">
+
+    <tags>
+        <!--
+          获取可见属性列表。
+          过滤掉 hidden 属性为 true 的字段。
+          @attr props 原始属性列表
+          @return 过滤后的可见属性 List
+        -->
+        <GetVisibleProps>
+            <attr name="props"/>
+            <source>
+                <c:script>
+                    return props ? props.filter(prop => prop != null &amp;&amp; !prop.hidden) : [];
+                </c:script>
+            </source>
+        </GetVisibleProps>
+
+        <!--
+          根据字典名和原始值获取对应的显示标签。
+          如果找不到字典或标签，则返回原始值的字符串形式。
+          @attr dictName 字典路径（如 sys/gender）
+          @attr value 原始值
+          @return 字典标签或原值
+        -->
+        <GetDictLabel>
+            <attr name="dictName" />
+            <attr name="value" />
+            <source>
+                <c:script><![CDATA[
+                    import io.nop.core.dict.DictProvider;
+                    if (value == null) return null;
+                    if (dictName == null || dictName == '') return value;
+                    const dict = DictProvider.instance().getDict(null, dictName, null, null);
+                    if (dict == null) return "" + value;
+                    const label = dict.getLabelByValue(value);
+                    return label != null ? label : "" + value;
+                ]]></c:script>
+            </source>
+        </GetDictLabel>
+
+        <!--
+          将 Excel 列索引转换为字母表示（如 0 -> A, 25 -> Z, 26 -> AA）。
+          @attr colIndex 从 0 开始的列索引
+          @return Excel 列字母
+        -->
+        <GetColLetter>
+            <attr name="colIndex" />
+            <source>
+                <c:script><![CDATA[
+                    import java.lang.Math;
+                    import java.lang.Character;
+
+                    let n = colIndex;
+                    let res = "";
+                    const A_CODE = 65; // 'A' 的 ASCII 码
+                    while (n >= 0) {
+                        let charCode = A_CODE + (n % 26);
+                        res = Character.toString(charCode) + res;
+                        n = Math.floor(n / 26) - 1;
+                    }
+                    return res;
+                ]]></c:script>
+            </source>
+        </GetColLetter>
+
+        <!--
+          计算多行合并表头信息。
+          采用基于“路径前缀一致性”的线性扫描算法，复杂度 O(Depth * ColCount)。
+          1. 解析 excelHeader 路径（以 / 分隔）并获取最大深度。
+          2. 对短路径进行尾部填充，使其长度一致。
+          3. 扫描网格，识别相同路径前缀的相邻单元格进行横向 (mergeAcross) 和纵向 (mergeDown) 合并。
+          @attr props 可见属性列表
+          @return { headerRows: 二维网格元数据, headerRowCount: 表头总行数 }
+        -->
+        <ComputeHeaderInfo>
+            <attr name="props"/>
+            <source>
+                <c:script><![CDATA[
+                    import java.util.ArrayList;
+                    import io.nop.commons.util.StringHelper;
+
+                    const isNotBlank = (str) => str != null && str.trim().length() > 0;
+
+                    // 1. 解析所有属性的表头路径并计算最大深度
+                    const colCount = props.size();
+                    const paths = new ArrayList();
+                    let maxDepth = 1;
+                    for (let i = 0; i < colCount; i++) {
+                        const prop = props.get(i);
+                        const p = new ArrayList();
+                        if (isNotBlank(prop.excelHeader)) {
+                            for (let part of StringHelper.split(prop.excelHeader, '/')) {
+                                if (isNotBlank(part)) p.add(part.trim());
+                            }
+                        }
+                        // 如果没有配置 excelHeader，则使用 comment 或 name
+                        if (p.isEmpty()) {
+                            p.add(isNotBlank(prop.comment) ? prop.comment.trim() : prop.name);
+                        }
+                        paths.add(p);
+                        if (p.size() > maxDepth) maxDepth = p.size();
+                    }
+
+                    // 2. 路径尾部填充（标准化），使所有路径深度一致，便于垂直合并计算
+                    for (let i = 0; i < colCount; i++) {
+                        const p = paths.get(i);
+                        const last = p.get(p.size() - 1);
+                        while (p.size() < maxDepth) p.add(last);
+                    }
+
+                    // 3. 初始化结果网格 (maxDepth x colCount)
+                    const grid = new ArrayList();
+                    for (let r = 0; r < maxDepth; r++) {
+                        const row = new ArrayList();
+                        for (let c = 0; c < colCount; c++) row.add(null);
+                        grid.add(row);
+                    }
+
+                    // 4. 线性扫描填充合并元数据
+                    for (let r = 0; r < maxDepth; r++) {
+                        for (let c = 0; c < colCount; c++) {
+                            // 如果该位置已被之前的合并操作覆盖，跳过
+                            if (grid.get(r).get(c) != null) continue;
+
+                            const label = paths.get(c).get(r);
+
+                            // 计算横向合并 (mergeAcross)：检查右侧列在当前层级及以上层级的标签是否一致
+                            let mc = 0;
+                            for (let nc = c + 1; nc < colCount; nc++) {
+                                let match = true;
+                                for (let k = 0; k <= r; k++) {
+                                    if (paths.get(c).get(k) != paths.get(nc).get(k)) {
+                                        match = false; break;
+                                    }
+                                }
+                                if (match) mc++; else break;
+                            }
+
+                            // 计算纵向合并 (mergeDown)：检查下方行标签是否与当前标签一致（且在其横向合并范围内）
+                            let md = 0;
+                            for (let nr = r + 1; nr < maxDepth; nr++) {
+                                let match = true;
+                                for (let k = c; k <= c + mc; k++) {
+                                    if (paths.get(k).get(nr) != label) {
+                                        match = false; break;
+                                    }
+                                }
+                                if (match) md++; else break;
+                            }
+
+                            const cellMeta = { value: label, mergeAcross: mc, mergeDown: md };
+                            
+                            // 在结果网格中填充合并信息，并标记被覆盖的占位单元格
+                            for (let dr = 0; dr <= md; dr++) {
+                                for (let dc = 0; dc <= mc; dc++) {
+                                    grid.get(r + dr).set(c + dc, (dr == 0 && dc == 0) ? cellMeta : { value: null, mergeAcross: 0, mergeDown: 0 });
+                                }
+                            }
+                        }
+                    }
+
+                    return { headerRows: grid, headerRowCount: maxDepth };
+                ]]></c:script>
+            </source>
+        </ComputeHeaderInfo>
+
+        <!--
+          构建字段元数据列表。
+          将 Po 模型属性转换为标准化的字段描述对象，支持表头层级解析。
+          @attr props 可见属性列表
+          @return 标准化字段元数据 List
+        -->
+        <BuildFieldMetas>
+            <attr name="props"/>
+            <source>
+                <c:script><![CDATA[
+                    import java.util.ArrayList;
+                    import io.nop.commons.util.StringHelper;
+
+                    const isNotBlank = (str) => str != null && str.trim().length() > 0;
+
+                    // 类型映射：将模型类型映射为 Nop 标准域
+                    const toStdDomain = (type) => {
+                        if (type == null) return 'string';
+                        const t = type.toLowerCase();
+                        if (t == 'int' || t == 'integer') return 'int';
+                        if (t == 'long') return 'long';
+                        if (t == 'double' || t == 'float' || t == 'decimal' || t == 'number') return 'double';
+                        if (t == 'boolean') return 'boolean';
+                        if (t == 'date') return 'date';
+                        if (t == 'datetime' || t == 'timestamp') return 'datetime';
+                        return 'string';
+                    };
+
+                    const fieldMetas = new ArrayList();
+                    for (let prop of props) {
+                        const parts = isNotBlank(prop.excelHeader) ? StringHelper.split(prop.excelHeader, '/') : [];
+                        let leafDisplayName = (isNotBlank(prop.comment) ? prop.comment.trim() : prop.name);
+                        // 取路径的最后一部分作为字段名
+                        if(parts.size() > 0) leafDisplayName = parts.get(parts.size() - 1).trim();
+                        
+                        let groupDisplayName = null;
+                        if (parts.size() > 1) {
+                            const groupParts = new ArrayList();
+                            for(let i=0; i < parts.size() - 1; i++){
+                                groupParts.add(parts.get(i).trim());
+                            }
+                            // 拼接触发分组的父级路径
+                            groupDisplayName = StringHelper.join(groupParts, '/');
+                        }
+
+                        fieldMetas.add({
+                            name: prop.name,
+                            displayName: leafDisplayName,
+                            stdDomain: toStdDomain(prop.type),
+                            groupDisplayName: groupDisplayName,
+                            // 自动生成内部唯一的分组字段名
+                            groupField: groupDisplayName ? '__group__' + groupDisplayName.replaceAll('[^A-Za-z0-9_]', '_') : null,
+                            mandatory: prop.mandatory,
+                            pattern: prop.pattern,
+                            min: prop.min,
+                            max: prop.max,
+                            precision: prop.precision,
+                            scale: prop.scale,
+                            minLength: prop.minLength,
+                            maxLength: prop.maxLength,
+                            dict: prop.dict
+                        });
+                    }
+                    return fieldMetas;
+                ]]></c:script>
+            </source>
+        </BuildFieldMetas>
+
+        <!--
+          构建分组字段映射。
+          从字段元数据中提取唯一的分组信息，用于生成多级表头的父级配置。
+          @attr fieldMetas 标准化字段元数据
+          @return 分组字段名 -> 分组信息 Map
+        -->
+        <BuildGroupFields>
+            <attr name="fieldMetas"/>
+            <source>
+                <c:script><![CDATA[
+                    import java.util.LinkedHashMap;
+                    const groupFields = new LinkedHashMap();
+                    for (let meta of fieldMetas) {
+                        if (meta.groupField && !groupFields.containsKey(meta.groupField)) {
+                            groupFields.put(meta.groupField, {
+                                name: meta.groupField,
+                                displayName: meta.groupDisplayName
+                            });
+                        }
+                    }
+                    return groupFields;
+                ]]></c:script>
+            </source>
+        </BuildGroupFields>
+    </tags>
+</lib>
