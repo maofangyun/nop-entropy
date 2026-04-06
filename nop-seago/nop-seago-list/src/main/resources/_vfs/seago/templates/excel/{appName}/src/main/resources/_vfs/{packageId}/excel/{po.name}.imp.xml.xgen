@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<c:unit xpl:outputMode="xml" xmlns:c="c" xmlns:xpl="xpl">
+    <imp x:schema="/nop/schema/excel/imp.xdef"
+         xmlns:x="/nop/schema/xdsl.xdef"
+         x:extends="_${po.name}.imp.xml">
+    </imp>
+</c:unit>

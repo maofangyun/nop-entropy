@@ -60,38 +60,10 @@ public abstract class _PropInfo extends io.nop.core.resource.component.AbstractC
     
     /**
      *  
-     * xml name: mandatory
+     * xml name: listProvider
      * 
      */
-    private java.lang.Boolean _mandatory ;
-    
-    /**
-     *  
-     * xml name: max
-     * 
-     */
-    private java.lang.Double _max ;
-    
-    /**
-     *  
-     * xml name: maxLength
-     * 
-     */
-    private java.lang.Integer _maxLength ;
-    
-    /**
-     *  
-     * xml name: min
-     * 
-     */
-    private java.lang.Double _min ;
-    
-    /**
-     *  
-     * xml name: minLength
-     * 
-     */
-    private java.lang.Integer _minLength ;
+    private java.lang.String _listProvider ;
     
     /**
      *  
@@ -102,31 +74,19 @@ public abstract class _PropInfo extends io.nop.core.resource.component.AbstractC
     
     /**
      *  
-     * xml name: pattern
-     * 
-     */
-    private java.lang.String _pattern ;
-    
-    /**
-     *  
-     * xml name: precision
-     * 
-     */
-    private java.lang.Integer _precision ;
-    
-    /**
-     *  
-     * xml name: scale
-     * 
-     */
-    private java.lang.Integer _scale ;
-    
-    /**
-     *  
      * xml name: type
      * 
      */
     private java.lang.String _type ;
+    
+    private boolean _mandatory;
+    private java.lang.String _pattern;
+    private java.lang.Double _min;
+    private java.lang.Double _max;
+    private java.lang.Integer _precision;
+    private java.lang.Integer _scale;
+    private java.lang.Integer _minLength;
+    private java.lang.Integer _maxLength;
     
     /**
      * 
@@ -244,95 +204,19 @@ public abstract class _PropInfo extends io.nop.core.resource.component.AbstractC
     
     /**
      * 
-     * xml name: mandatory
+     * xml name: listProvider
      *  
      */
     
-    public java.lang.Boolean getMandatory(){
-      return _mandatory;
+    public java.lang.String getListProvider(){
+      return _listProvider;
     }
 
     
-    public void setMandatory(java.lang.Boolean value){
+    public void setListProvider(java.lang.String value){
         checkAllowChange();
         
-        this._mandatory = value;
-           
-    }
-
-    
-    /**
-     * 
-     * xml name: max
-     *  
-     */
-    
-    public java.lang.Double getMax(){
-      return _max;
-    }
-
-    
-    public void setMax(java.lang.Double value){
-        checkAllowChange();
-        
-        this._max = value;
-           
-    }
-
-    
-    /**
-     * 
-     * xml name: maxLength
-     *  
-     */
-    
-    public java.lang.Integer getMaxLength(){
-      return _maxLength;
-    }
-
-    
-    public void setMaxLength(java.lang.Integer value){
-        checkAllowChange();
-        
-        this._maxLength = value;
-           
-    }
-
-    
-    /**
-     * 
-     * xml name: min
-     *  
-     */
-    
-    public java.lang.Double getMin(){
-      return _min;
-    }
-
-    
-    public void setMin(java.lang.Double value){
-        checkAllowChange();
-        
-        this._min = value;
-           
-    }
-
-    
-    /**
-     * 
-     * xml name: minLength
-     *  
-     */
-    
-    public java.lang.Integer getMinLength(){
-      return _minLength;
-    }
-
-    
-    public void setMinLength(java.lang.Integer value){
-        checkAllowChange();
-        
-        this._minLength = value;
+        this._listProvider = value;
            
     }
 
@@ -358,63 +242,6 @@ public abstract class _PropInfo extends io.nop.core.resource.component.AbstractC
     
     /**
      * 
-     * xml name: pattern
-     *  
-     */
-    
-    public java.lang.String getPattern(){
-      return _pattern;
-    }
-
-    
-    public void setPattern(java.lang.String value){
-        checkAllowChange();
-        
-        this._pattern = value;
-           
-    }
-
-    
-    /**
-     * 
-     * xml name: precision
-     *  
-     */
-    
-    public java.lang.Integer getPrecision(){
-      return _precision;
-    }
-
-    
-    public void setPrecision(java.lang.Integer value){
-        checkAllowChange();
-        
-        this._precision = value;
-           
-    }
-
-    
-    /**
-     * 
-     * xml name: scale
-     *  
-     */
-    
-    public java.lang.Integer getScale(){
-      return _scale;
-    }
-
-    
-    public void setScale(java.lang.Integer value){
-        checkAllowChange();
-        
-        this._scale = value;
-           
-    }
-
-    
-    /**
-     * 
      * xml name: type
      *  
      */
@@ -423,7 +250,38 @@ public abstract class _PropInfo extends io.nop.core.resource.component.AbstractC
       return _type;
     }
 
-    
+    public boolean isMandatory(){
+        return _mandatory;
+    }
+
+    public java.lang.String getPattern(){
+        return _pattern;
+    }
+
+    public java.lang.Double getMin(){
+        return _min;
+    }
+
+    public java.lang.Double getMax(){
+        return _max;
+    }
+
+    public java.lang.Integer getPrecision(){
+        return _precision;
+    }
+
+    public java.lang.Integer getScale(){
+        return _scale;
+    }
+
+    public java.lang.Integer getMinLength(){
+        return _minLength;
+    }
+
+    public java.lang.Integer getMaxLength(){
+        return _maxLength;
+    }
+
     public void setType(java.lang.String value){
         checkAllowChange();
         
@@ -453,15 +311,8 @@ public abstract class _PropInfo extends io.nop.core.resource.component.AbstractC
         out.putNotNull("excelWidth",this.getExcelWidth());
         out.putNotNull("hidden",this.getHidden());
         out.putNotNull("length",this.getLength());
-        out.putNotNull("mandatory",this.getMandatory());
-        out.putNotNull("max",this.getMax());
-        out.putNotNull("maxLength",this.getMaxLength());
-        out.putNotNull("min",this.getMin());
-        out.putNotNull("minLength",this.getMinLength());
+        out.putNotNull("listProvider",this.getListProvider());
         out.putNotNull("name",this.getName());
-        out.putNotNull("pattern",this.getPattern());
-        out.putNotNull("precision",this.getPrecision());
-        out.putNotNull("scale",this.getScale());
         out.putNotNull("type",this.getType());
     }
 
@@ -480,15 +331,8 @@ public abstract class _PropInfo extends io.nop.core.resource.component.AbstractC
         instance.setExcelWidth(this.getExcelWidth());
         instance.setHidden(this.getHidden());
         instance.setLength(this.getLength());
-        instance.setMandatory(this.getMandatory());
-        instance.setMax(this.getMax());
-        instance.setMaxLength(this.getMaxLength());
-        instance.setMin(this.getMin());
-        instance.setMinLength(this.getMinLength());
+        instance.setListProvider(this.getListProvider());
         instance.setName(this.getName());
-        instance.setPattern(this.getPattern());
-        instance.setPrecision(this.getPrecision());
-        instance.setScale(this.getScale());
         instance.setType(this.getType());
     }
 

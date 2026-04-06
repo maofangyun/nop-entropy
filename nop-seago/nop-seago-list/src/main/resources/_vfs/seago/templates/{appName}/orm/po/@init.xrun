@@ -6,6 +6,8 @@
         builder.defineGlobalVar("packageId",packageId);
         builder.defineGlobalVar("packageName",packageName);
         builder.defineGlobalVar("poModel",poModel);
+        builder.defineGlobalVar("appName", appName);
+        
         builder.defineLoopVar("po", "poModel", model => model.pos);
     ]]></c:script>
 </gen:DefineLoop>

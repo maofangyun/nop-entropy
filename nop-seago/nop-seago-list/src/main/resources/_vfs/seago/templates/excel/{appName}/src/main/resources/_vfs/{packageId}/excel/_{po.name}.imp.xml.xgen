@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<c:unit xpl:outputMode="xml" xmlns:c="c" xmlns:xpl="xpl">
+    <c:import from="/nop/excel/xlib/po-gen.xlib"/>
+
+    <imp x:schema="/nop/schema/excel/imp.xdef"
+         xmlns:x="/nop/schema/xdsl.xdef"
+         xmlns:po-gen="po-gen"
+         defaultStripText="true">
+        <sheets>
+             <po-gen:GenSheetConfig po="${po}"/>
+        </sheets>
+    </imp>
+</c:unit>

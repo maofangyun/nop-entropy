@@ -58,14 +58,6 @@ public class PoExcelHelperTest {
     }
 
     @Test
-    public void testBuildImportModelFile() {
-        PoConfig poConfig = buildTestPoConfig();
-        File file = PoExcelHelper.buildImportModelFile(poConfig);
-        Assertions.assertTrue(file.exists());
-    }
-
-
-    @Test
     public void testBuildExportWithDynamicDict() {
         PoConfig poConfig = buildTestPoConfig();
         PoInfo poInfo = poConfig.getPos().get(0);
@@ -118,6 +110,7 @@ public class PoExcelHelperTest {
     @Test
     public void testParseExcelValidationError() {
         PoConfig poConfig = new PoConfig();
+        poConfig.setPackageName("seago.po");
         PoInfo po = new PoInfo();
         po.setName("User");
         po.setComment("用户列表");
@@ -126,7 +119,6 @@ public class PoExcelHelperTest {
         p1.setName("age");
         p1.setExcelHeader("年龄");
         p1.setType("int");
-        p1.setMin(18.0);
 
         po.setProps(Arrays.asList(p1));
         poConfig.setPos(Arrays.asList(po));
@@ -146,13 +138,11 @@ public class PoExcelHelperTest {
             PoExcelHelper.parseExcel(poConfig, "User", resource);
             fail("Should throw exception");
         } catch (NopException e) {
+            System.out.println("ErrorCode: " + e.getErrorCode() + ", Params: " + e.getParams());
             // 验证报错信息或参数包含行列号
             boolean hasA2 = e.getMessage().contains("A2") || 
                             (e.getParams() != null && "A2".equals(e.getParams().get("cellPos")));
-            if(!hasA2){
-                System.out.println("Error: " + e.getErrorCode() + ", Message: " + e.getMessage() + ", Params: " + e.getParams());
-            }
-            assertTrue(hasA2);
+            assertTrue(hasA2, "Expected cellPos A2 in error params: " + e.getParams());
         }
     }
 

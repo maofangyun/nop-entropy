@@ -11,6 +11,7 @@ import io.nop.core.model.object.DynamicObject;
 import io.nop.core.resource.IResource;
 import io.nop.core.resource.impl.FileResource;
 import io.nop.core.resource.VirtualFileSystem;
+import io.nop.core.resource.component.ResourceComponentManager;
 import io.nop.excel.imp.model.ImportModel;
 import io.nop.excel.model.ExcelWorkbook;
 import io.nop.ooxml.xlsx.imp.XlsxObjectLoader;
@@ -80,9 +81,12 @@ public class PoExcelHelper {
             new PoDictGenerator(dictService).generateDictFiles(dictNames);
         }
 
-        XNode impNode = buildImportModelNode(poConfig);
+        String moduleId = poConfig.getPackageName().replace('.', '/');
+        String impPath = "/" + moduleId + "/excel/" + poName + ".imp.xml";
+        LOG.info("PoExcelHelper.parseExcel: loading import model from vfs path={}", impPath);
+        
+        ImportModel importModel = (ImportModel) ResourceComponentManager.instance().loadComponentModel(impPath);
 
-        ImportModel importModel = (ImportModel) DslModelHelper.parseDslNode("/nop/schema/excel/imp.xdef", impNode);
         XlsxObjectLoader loader = new XlsxObjectLoader(importModel);
         loader.setReturnDynamicObject(true);
 
@@ -103,29 +107,6 @@ public class PoExcelHelper {
         }
         LOG.info("PoExcelHelper.parseExcel: finished, result size={}", list.size());
         return list;
-    }
-
-    public static XNode buildImportModelNode(PoConfig poConfig) {
-        LOG.debug("PoExcelHelper.buildImportModelNode: starting XPL generation");
-        try {
-            IResource xgenResource = VirtualFileSystem.instance().getResource("/nop/excel/po-to-imp.imp.xml.xgen");
-            EvalScopeImpl evalScope = new EvalScopeImpl();
-            evalScope.setLocalValue("poConfig", poConfig);
-            XNode node = (XNode) XLang.parseXpl(xgenResource, XLangOutputMode.node).invoke(evalScope);
-            LOG.debug("PoExcelHelper.buildImportModelNode: finished generation");
-            return node;
-        } catch (Exception e) {
-            LOG.error("PoExcelHelper.buildImportModelNode: error generating import model node", e);
-            throw NopException.adapt(e);
-        }
-    }
-
-    public static File buildImportModelFile(PoConfig poConfig) {
-        XNode node = buildImportModelNode(poConfig);
-        File file = new File(System.getProperty("java.io.tmpdir"), "imp.xml");
-        LOG.info("PoExcelHelper.buildImportModelFile: saving to {}", file.getAbsolutePath());
-        FileHelper.writeText(file, node.xml(), "UTF-8");
-        return file;
     }
 
     public static ExcelWorkbook buildExportWorkbook(PoInfo poInfo, List<?> data) {
