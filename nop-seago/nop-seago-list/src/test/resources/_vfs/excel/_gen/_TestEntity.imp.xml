@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<imp x:schema="/nop/schema/excel/imp.xdef" xmlns:x="/nop/schema/xdsl.xdef" xmlns:import-gen="import-gen"
+     defaultStripText="true">
+
+    <sheets>
+        <sheet name="TestEntity" field="TestEntity" list="true">
+            <fields>
+                <field name="id" displayName="唯一标识" importDictLabel="false">
+                    <schema stdDomain="string"/>
+                </field>
+                <field name="userName" displayName="姓名" groupField="__group___________" importDictLabel="false">
+                    <schema stdDomain="string"/>
+                </field>
+                <field name="gender" displayName="性别" groupField="__group___________" importDictLabel="true">
+                    <schema stdDomain="string" dict="sys/gender_dict"/>
+                </field>
+                <field name="age" displayName="年龄" groupField="__group___________" importDictLabel="false">
+                    <schema stdDomain="int" min="18.0" max="60.0"/>
+                </field>
+                <field name="departmentId" displayName="所属部门" groupField="__group______" importDictLabel="false">
+                    <schema stdDomain="string"/>
+                </field>
+                <field name="__group___________" displayName="基本信息/个人资料">
+                    <schema stdDomain="string"/>
+                </field>
+                <field name="__group______" displayName="基本信息">
+                    <schema stdDomain="string"/>
+                </field>
+            </fields>
+        </sheet>
+    </sheets>
+</imp>

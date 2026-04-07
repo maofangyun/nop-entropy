@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <c:unit xpl:outputMode="xml" xmlns:c="c" xmlns:xpl="xpl">
-    <c:import from="/nop/excel/xlib/po-gen.xlib"/>
 
     <imp x:schema="/nop/schema/excel/imp.xdef"
          xmlns:x="/nop/schema/xdsl.xdef"
-         xmlns:po-gen="po-gen"
+         xmlns:import-gen="import-gen"
          defaultStripText="true">
         <sheets>
-             <po-gen:GenSheetConfig po="${po}"/>
+             <import-gen:GenSheetConfig po="${po}" xpl:lib="/nop/excel/xlib/import-gen.xlib"/>
         </sheets>
     </imp>
 </c:unit>

@@ -9,6 +9,7 @@
                 <prop name="id" type="string" excelHeader="唯一标识"/>
                 <prop name="userName" type="string" excelHeader="基本信息/个人资料/姓名"/>
                 <prop name="gender" type="string" excelHeader="基本信息/个人资料/性别" dict="sys/gender_dict"/>
+                <prop name="age" type="int" excelHeader="基本信息/个人资料/年龄" min="18" max="60"/>
                 <prop name="departmentId" type="string" excelHeader="基本信息/所属部门"/>
                 <prop name="secretKey" type="string" hidden="true"/>
             </props>
