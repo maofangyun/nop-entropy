@@ -82,8 +82,8 @@ public class PoExcelHelper {
     /**
      * 解析 Excel 文件的便捷方法（不带字典服务）。
      */
-    public static List<Map<String, Object>> parseExcel(PoConfig poConfig, String poName, IResource resource) {
-        return parseExcel(poConfig, poName, resource, null);
+    public static List<Map<String, Object>> parseExcel(PoInfo poInfo, IResource resource) {
+        return parseExcel(poInfo, resource, null);
     }
 
     /**
@@ -95,18 +95,22 @@ public class PoExcelHelper {
      * 3. 使用 XlsxObjectLoader 加载并解析 Excel 内容。
      * 4. 将解析出的 DynamicObject 或其他对象转换为标准的 Map 列表返回。
      *
-     * @param poConfig    实体所属的配置环境
-     * @param poName      要解析的实体名称（对应 Excel 中的 Sheet 或字段名）
+     * @param poInfo      实体元数据定义
      * @param resource    Excel 文件的资源引用
      * @param dictService 字典服务，用于动态解析字典项
      * @return 解析后的数据列表，每一项为一个 Map
      */
-    public static List<Map<String, Object>> parseExcel(PoConfig poConfig, String poName, IResource resource, IPoDictService dictService) {
+    public static List<Map<String, Object>> parseExcel(PoInfo poInfo, IResource resource, IPoDictService dictService) {
+        if (poInfo == null) {
+            return Collections.emptyList();
+        }
+        String poName = poInfo.getName();
         LOG.info("PoExcelHelper.parseExcel: poName={}, resource={}", poName, resource);
 
         // 1. 动态生成字典文件：确保 Excel 解析时能正确识别字典 Label
         if (dictService != null) {
-            Set<String> dictNames = collectDictNames(poConfig);
+            // 收集当前实体所引用的字典
+            Set<String> dictNames = collectDictNames(poInfo);
             new PoDictGenerator(dictService).generateDictFiles(dictNames);
         }
 

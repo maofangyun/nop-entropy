@@ -65,6 +65,9 @@ public class PoExcelHelperTest {
         List<Map<String, Object>> data = new ArrayList<>();
         Map<String, Object> row = new HashMap<>();
         row.put("id", "1001");
+        row.put("userName", "张三");
+        row.put("age", 25);
+        row.put("departmentId","PDM");
         row.put("gender", "1");
         data.add(row);
 
@@ -93,10 +96,11 @@ public class PoExcelHelperTest {
     @Test
     public void testParseExcel() {
         PoConfig poConfig = buildTestPoConfig();
+        PoInfo poInfo = poConfig.getPos().get(0);
         IResource resource = ResourceHelper.resolve("/seago/po/test-import.xlsx");
 
         // 不再支持 dictService 处理字典转换
-        List<Map<String, Object>> result = PoExcelHelper.parseExcel(poConfig, "TestEntity", resource);
+        List<Map<String, Object>> result = PoExcelHelper.parseExcel(poInfo, resource);
 
         assertNotNull(result, "Result list should not be null");
         assertEquals(3,result.size());
@@ -110,11 +114,12 @@ public class PoExcelHelperTest {
     @Test
     public void testParseExcelValidationError() {
         PoConfig poConfig = buildTestPoConfig();
+        PoInfo poInfo = poConfig.getPos().get(0);
         IResource resource = ResourceHelper.resolve("/seago/po/test-check.xlsx");
 
         // 执行解析并验证校验异常
         try {
-            PoExcelHelper.parseExcel(poConfig, "TestEntity", resource);
+            PoExcelHelper.parseExcel(poInfo, resource);
             fail("Should throw validation exception for invalid data");
         } catch (NopException e) {
             String msg = e.getMessage();
