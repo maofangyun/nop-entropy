@@ -15,9 +15,12 @@
                     <schema stdDomain="string" dict="sys/gender_dict"/>
                 </field>
                 <field name="age" displayName="年龄" groupField="__group___________" importDictLabel="false">
-                    <schema stdDomain="int" min="18.0" max="60.0"/>
+                    <schema stdDomain="int" min="18.0" max="45.0"/>
                 </field>
                 <field name="departmentId" displayName="所属部门" groupField="__group______" importDictLabel="false">
+                    <schema stdDomain="string"/>
+                </field>
+                <field name="roleLevel" displayName="角色/等级" groupField="__group______" importDictLabel="false">
                     <schema stdDomain="string"/>
                 </field>
                 <field name="__group___________" displayName="基本信息/个人资料">

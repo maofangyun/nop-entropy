@@ -80,8 +80,18 @@
                 <c:script><![CDATA[
                     import java.util.ArrayList;
                     import io.nop.commons.util.StringHelper;
+                    import io.nop.api.core.json.JSON;
 
                     const isNotBlank = (str) => str != null && str.trim().length() > 0;
+
+                    const parseHeader = (h) => {
+                        if (!isNotBlank(h)) return [];
+                        const trimmed = h.trim();
+                        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                            return JSON.parse(trimmed);
+                        }
+                        return StringHelper.split(trimmed, '/');
+                    };
 
                     // 1. 解析所有属性的表头路径并计算最大深度
                     const colCount = props.size();
@@ -90,10 +100,9 @@
                     for (let i = 0; i < colCount; i++) {
                         const prop = props.get(i);
                         const p = new ArrayList();
-                        if (isNotBlank(prop.excelHeader)) {
-                            for (let part of StringHelper.split(prop.excelHeader, '/')) {
-                                if (isNotBlank(part)) p.add(part.trim());
-                            }
+                        const parts = parseHeader(prop.excelHeader);
+                        for (let part of parts) {
+                            if (isNotBlank(part)) p.add(part.toString().trim());
                         }
                         // 如果没有配置 excelHeader，则使用 comment 或 name
                         if (p.isEmpty()) {
@@ -178,8 +187,18 @@
                 <c:script><![CDATA[
                     import java.util.ArrayList;
                     import io.nop.commons.util.StringHelper;
+                    import io.nop.api.core.json.JSON;
 
                     const isNotBlank = (str) => str != null && str.trim().length() > 0;
+
+                    const parseHeader = (h) => {
+                        if (!isNotBlank(h)) return [];
+                        const trimmed = h.trim();
+                        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                            return JSON.parse(trimmed);
+                        }
+                        return StringHelper.split(trimmed, '/');
+                    };
 
                     // 类型映射：将模型类型映射为 Nop 标准域
                     const toStdDomain = (type) => {
@@ -196,16 +215,16 @@
 
                     const fieldMetas = new ArrayList();
                     for (let prop of props) {
-                        const parts = isNotBlank(prop.excelHeader) ? StringHelper.split(prop.excelHeader, '/') : [];
+                        const parts = parseHeader(prop.excelHeader);
                         let leafDisplayName = (isNotBlank(prop.comment) ? prop.comment.trim() : prop.name);
                         // 取路径的最后一部分作为字段名
-                        if(parts.size() > 0) leafDisplayName = parts.get(parts.size() - 1).trim();
+                        if(parts.size() > 0) leafDisplayName = parts.get(parts.size() - 1).toString().trim();
                         
                         let groupDisplayName = null;
                         if (parts.size() > 1) {
                             const groupParts = new ArrayList();
                             for(let i=0; i < parts.size() - 1; i++){
-                                groupParts.add(parts.get(i).trim());
+                                groupParts.add(parts.get(i).toString().trim());
                             }
                             // 拼接触发分组的父级路径
                             groupDisplayName = StringHelper.join(groupParts, '/');
