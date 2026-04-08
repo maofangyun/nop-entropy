@@ -11,28 +11,47 @@
                 <field name="userName" displayName="姓名" groupField="__group___________" importDictLabel="false">
                     <schema stdDomain="string">
                         <validator>
-                        import com.seago.code.excel.PoExcelHelper;
-
-                        PoExcelHelper.doCheck(value, cell, runtime_errors, checks);
-                    </validator>
+                            import io.nop.core.model.table.CellPosition;
+                            const cellPos = cell ? CellPosition.toABString(cell.rowIndex, cell.colIndex) : "未知";
+                            
+                                    if (value == null || value == '') {
+                                        runtime_errors.add({ cellPos: cellPos, msg: '用户名不能为空' });
+                                        // cannot return here because there's no anonymous function anymore
+                                    }
+                                
+                                    if (value != null &amp;&amp; !value.toString().matches('^[\\u4e00-\\u9fa5]+$')) {
+                                        runtime_errors.add({ cellPos: cellPos, msg: '必须全为中文' });
+                                    }
+                                </validator>
                     </schema>
                 </field>
                 <field name="gender" displayName="性别" groupField="__group___________" importDictLabel="true">
                     <schema stdDomain="string" dict="sys/gender_dict">
                         <validator>
-                        import com.seago.code.excel.PoExcelHelper;
-
-                        PoExcelHelper.doCheck(value, cell, runtime_errors, checks);
-                    </validator>
+                            import io.nop.core.model.table.CellPosition;
+                            const cellPos = cell ? CellPosition.toABString(cell.rowIndex, cell.colIndex) : "未知";
+                            
+                                    if (value == null || value == '') {
+                                        runtime_errors.add({ cellPos: cellPos, msg: '不能为空' });
+                                        // cannot return here because there's no anonymous function anymore
+                                    }
+                                </validator>
                     </schema>
                 </field>
                 <field name="age" displayName="年龄" groupField="__group___________" importDictLabel="false">
                     <schema stdDomain="int">
                         <validator>
-                        import com.seago.code.excel.PoExcelHelper;
-
-                        PoExcelHelper.doCheck(value, cell, runtime_errors, checks);
-                    </validator>
+                            import io.nop.core.model.table.CellPosition;
+                            const cellPos = cell ? CellPosition.toABString(cell.rowIndex, cell.colIndex) : "未知";
+                            
+                                    if (value != null) {
+                                        
+                                            if (value &lt; 18.0) runtime_errors.add({ cellPos: cellPos, msg: '年龄必须在 18 到 45 岁之间' });
+                                        
+                                            if (value &gt; 45.0) runtime_errors.add({ cellPos: cellPos, msg: '年龄必须在 18 到 45 岁之间' });
+                                        
+                                    }
+                                </validator>
                     </schema>
                 </field>
                 <field name="departmentId" displayName="所属部门" groupField="__group______" importDictLabel="false">

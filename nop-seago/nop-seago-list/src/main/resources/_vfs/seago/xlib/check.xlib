@@ -10,17 +10,17 @@
             <source>
                 <c:if test="${checks != null and !checks.isEmpty()}">
                     <validator>
-                        value => {
-                            const cellPos = cell.cellPos.toABString();
+                            import io.nop.core.model.table.CellPosition;
+                            const cellPos = cell ? CellPosition.toABString(cell.rowIndex, cell.colIndex) : "未知";
                             <c:for var="check" items="${checks}">
                                 <c:script>
                                     // 预处理动态属性访问
-                                    const m = check.prop_get('message');
-                                    const min = check.prop_get('min');
-                                    const max = check.prop_get('max');
-                                    const precision = check.prop_get('precision');
-                                    const scale = check.prop_get('scale');
-                                    const regex = check.prop_get('regex');
+                                    const m = check.message;
+                                    const min = check.prop_has('min') ? check.prop_get('min') : null;
+                                    const max = check.prop_has('max') ? check.prop_get('max') : null;
+                                    const precision = check.prop_has('precision') ? check.prop_get('precision') : null;
+                                    const scale = check.prop_has('scale') ? check.prop_get('scale') : null;
+                                    const regex = check.prop_has('regex') ? check.prop_get('regex') : null;
                                     
                                     assign("m", m);
                                     assign("min", min);
@@ -33,18 +33,17 @@
                                 <c:if test="${check.tagName == 'notNull'}">
                                     if (value == null || value == '') {
                                         runtime_errors.add({ cellPos: cellPos, msg: '${(m || "不能为空").replace("'","\\'")}' });
-                                        return;
+                                        // cannot return here because there's no anonymous function anymore
                                     }
                                 </c:if>
 
                                 <c:if test="${check.tagName == 'range'}">
                                     if (value != null) {
-                                        let v = Double.valueOf(value.toString());
                                         <c:if test="${min != null}">
-                                            if (v &lt; ${min}) runtime_errors.add({ cellPos: cellPos, msg: '${(m || "值不能小于" + min).replace("'","\\'")}' });
+                                            if (value &lt; ${min}) runtime_errors.add({ cellPos: cellPos, msg: '${(m || "值不能小于" + min).replace("'","\\'")}' });
                                         </c:if>
                                         <c:if test="${max != null}">
-                                            if (v &gt; ${max}) runtime_errors.add({ cellPos: cellPos, msg: '${(m || "值不能大于" + max).replace("'","\\'")}' });
+                                            if (value &gt; ${max}) runtime_errors.add({ cellPos: cellPos, msg: '${(m || "值不能大于" + max).replace("'","\\'")}' });
                                         </c:if>
                                     }
                                 </c:if>
@@ -106,7 +105,6 @@
                                     }
                                 </c:if>
                             </c:for>
-                        }
                     </validator>
                 </c:if>
             </source>

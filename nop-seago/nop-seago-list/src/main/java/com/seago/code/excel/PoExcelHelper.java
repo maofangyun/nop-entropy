@@ -97,23 +97,8 @@ public class PoExcelHelper {
         ImportExcelParser parser = new ImportExcelParser(importModel, XLang.newCompileTool().allowUnregisteredScopeVar(true), scope);
         parser.setReturnDynamicObject(true);
         
-        Object result;
-        try {
-            // 2. 执行解析
-            result = parser.parseFromWorkbook(wk);
-        } catch (NopException e) {
-            // 处理非预期中断异常（如类型转换错误）
-            String errorMsg = e.getDescription();
-            if (errorMsg == null) errorMsg = e.getMessage();
-            
-            if (errorMsg != null && errorMsg.contains("单元格[")) {
-                throw new NopException(ERR_IMPORT_VALIDATION_FAIL).description(errorMsg);
-            }
-            
-            String cellPos = (String) e.getParam(ARG_CELL_POS);
-            if (ApiStringHelper.isEmpty(cellPos)) cellPos = "未知";
-            throw new NopException(ERR_IMPORT_VALIDATION_FAIL).description("单元格[" + cellPos + "]校验失败：" + errorMsg);
-        }
+        // 2. 执行解析
+        Object result = parser.parseFromWorkbook(wk);
 
         // 3. 处理收集到的运行时校验错误（多行多列汇总）
         if (!runtimeErrors.isEmpty()) {
