@@ -1,0 +1,115 @@
+<lib xmlns:c="c" xmlns:xpl="xpl" xmlns:thisLib="thisLib">
+    <tags>
+        <!--
+          统一采用内联代码生成方案。
+          在 Codegen 期将 checks 元数据展开为运行时 JavaScript 代码。
+          运行时直接向 runtime_errors 列表添加错误信息。
+        -->
+        <GenSchemaValidator outputMode="xml">
+            <attr name="checks" type="List" />
+            <source>
+                <c:if test="${checks != null and !checks.isEmpty()}">
+                    <validator>
+                        value => {
+                            const cellPos = cell.cellPos.toABString();
+                            <c:for var="check" items="${checks}">
+                                <c:script>
+                                    // 预处理动态属性访问
+                                    const m = check.prop_get('message');
+                                    const min = check.prop_get('min');
+                                    const max = check.prop_get('max');
+                                    const precision = check.prop_get('precision');
+                                    const scale = check.prop_get('scale');
+                                    const regex = check.prop_get('regex');
+                                    
+                                    assign("m", m);
+                                    assign("min", min);
+                                    assign("max", max);
+                                    assign("precision", precision);
+                                    assign("scale", scale);
+                                    assign("regex", regex);
+                                </c:script>
+
+                                <c:if test="${check.tagName == 'notNull'}">
+                                    if (value == null || value == '') {
+                                        runtime_errors.add({ cellPos: cellPos, msg: '${(m || "不能为空").replace("'","\\'")}' });
+                                        return;
+                                    }
+                                </c:if>
+
+                                <c:if test="${check.tagName == 'range'}">
+                                    if (value != null) {
+                                        let v = Double.valueOf(value.toString());
+                                        <c:if test="${min != null}">
+                                            if (v &lt; ${min}) runtime_errors.add({ cellPos: cellPos, msg: '${(m || "值不能小于" + min).replace("'","\\'")}' });
+                                        </c:if>
+                                        <c:if test="${max != null}">
+                                            if (v &gt; ${max}) runtime_errors.add({ cellPos: cellPos, msg: '${(m || "值不能大于" + max).replace("'","\\'")}' });
+                                        </c:if>
+                                    }
+                                </c:if>
+
+                                <c:if test="${check.tagName == 'number'}">
+                                    if (value != null) {
+                                        let str = value.toString();
+                                        if (!str.matches('^-?\\d+(\\.\\d+)?$')) {
+                                            runtime_errors.add({ cellPos: cellPos, msg: '${(m || "必须是数字").replace("'","\\'")}' });
+                                        } else {
+                                            <c:if test="${precision != null}">
+                                                if (str.replace('.', '').replace('-', '').length() &gt; ${precision}) {
+                                                    runtime_errors.add({ cellPos: cellPos, msg: '${(m || "数字长度不能超过" + precision).replace("'","\\'")}' });
+                                                }
+                                            </c:if>
+                                            <c:if test="${scale != null}">
+                                                let ps = str.split('\\.');
+                                                if (ps.length &gt; 1 &amp;&amp; ps[1].length() &gt; ${scale}) {
+                                                    runtime_errors.add({ cellPos: cellPos, msg: '${(m || "小数位数不能超过" + scale).replace("'","\\'")}' });
+                                                }
+                                            </c:if>
+                                        }
+                                    }
+                                </c:if>
+
+                                <c:if test="${check.tagName == 'pattern'}">
+                                    if (value != null &amp;&amp; !value.toString().matches('${(regex || "").replace("'","\\'").replace("\\","\\\\")}')) {
+                                        runtime_errors.add({ cellPos: cellPos, msg: '${(m || "格式校验失败").replace("'","\\'")}' });
+                                    }
+                                </c:if>
+
+                                <c:if test="${check.tagName == 'chinese'}">
+                                    if (value != null &amp;&amp; !value.toString().matches('^[\\u4e00-\\u9fa5]+$')) {
+                                        runtime_errors.add({ cellPos: cellPos, msg: '${(m || "必须全为中文").replace("'","\\'")}' });
+                                    }
+                                </c:if>
+
+                                <c:if test="${check.tagName == 'notChinese'}">
+                                    if (value != null &amp;&amp; value.toString().matches('.*[\\u4e00-\\u9fa5].*')) {
+                                        runtime_errors.add({ cellPos: cellPos, msg: '${(m || "不能包含中文").replace("'","\\'")}' });
+                                    }
+                                </c:if>
+
+                                <c:if test="${check.tagName == 'english'}">
+                                    if (value != null &amp;&amp; !value.toString().matches('^[a-zA-Z]+$')) {
+                                        runtime_errors.add({ cellPos: cellPos, msg: '${(m || "必须全为英文").replace("'","\\'")}' });
+                                    }
+                                </c:if>
+
+                                <c:if test="${check.tagName == 'notEnglish'}">
+                                    if (value != null &amp;&amp; value.toString().matches('.*[a-zA-Z].*')) {
+                                        runtime_errors.add({ cellPos: cellPos, msg: '${(m || "不能包含英文").replace("'","\\'")}' });
+                                    }
+                                </c:if>
+
+                                <c:if test="${check.tagName == 'notNumber'}">
+                                    if (value != null &amp;&amp; value.toString().matches('.*[0-9].*')) {
+                                        runtime_errors.add({ cellPos: cellPos, msg: '${(m || "不能包含数字").replace("'","\\'")}' });
+                                    }
+                                </c:if>
+                            </c:for>
+                        }
+                    </validator>
+                </c:if>
+            </source>
+        </GenSchemaValidator>
+    </tags>
+</lib>

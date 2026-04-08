@@ -68,7 +68,7 @@
         <!--
           计算多行合并表头信息。
           采用基于“路径前缀一致性”的线性扫描算法，复杂度 O(Depth * ColCount)。
-          1. 解析 excelHeader 路径（以 / 分隔）并获取最大深度。
+          1. 解析 excelHeader 路径，并获取最大深度。
           2. 对短路径进行尾部填充，使其长度一致。
           3. 扫描网格，识别相同路径前缀的相邻单元格进行横向 (mergeAcross) 和纵向 (mergeDown) 合并。
           @attr props 可见属性列表
@@ -237,14 +237,7 @@
                             groupDisplayName: groupDisplayName,
                             // 自动生成内部唯一的分组字段名
                             groupField: groupDisplayName ? '__group__' + groupDisplayName.replaceAll('[^A-Za-z0-9_]', '_') : null,
-                            mandatory: prop.mandatory,
-                            pattern: prop.pattern,
-                            min: prop.min,
-                            max: prop.max,
-                            precision: prop.precision,
-                            scale: prop.scale,
-                            minLength: prop.minLength,
-                            maxLength: prop.maxLength,
+                            checks: prop.checks,
                             dict: prop.dict
                         });
                     }

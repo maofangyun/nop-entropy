@@ -6,12 +6,25 @@
     <pos>
         <po name="TestEntity" comment="TestEntity">
             <props>
-                <prop name="id" type="string" excelHeader="唯一标识"/>
-                <prop name="userName" type="string" excelHeader='["基本信息", "个人资料", "姓名"]'/>
-                <prop name="gender" type="string" excelHeader='["基本信息", "个人资料", "性别"]' dict="sys/gender_dict"/>
-                <prop name="age" type="int" excelHeader='["基本信息", "个人资料", "年龄"]' min="18" max="45"/>
-                <prop name="departmentId" type="string" excelHeader='["基本信息", "所属部门"]'/>
-                <prop name="roleLevel" type="string" excelHeader='["基本信息", "角色/等级"]'/>
+                <prop name="id" type="string" excelHeader="唯一标识" tagSet="io"/>
+                <prop name="userName" type="string" excelHeader='["基本信息", "个人资料", "姓名"]' tagSet="io">
+                    <checks>
+                        <notNull message="用户名不能为空"/>
+                        <chinese/>
+                    </checks>
+                </prop>
+                <prop name="gender" type="string" excelHeader='["基本信息", "个人资料", "性别"]' dict="sys/gender_dict" tagSet="io">
+                    <checks>
+                        <notNull/>
+                    </checks>
+                </prop>
+                <prop name="age" type="int" excelHeader='["基本信息", "个人资料", "年龄"]' tagSet="io">
+                    <checks>
+                        <range min="18.0" max="45.0" message="年龄必须在 18 到 45 岁之间"/>
+                    </checks>
+                </prop>
+                <prop name="departmentId" type="string" excelHeader='["基本信息", "所属部门"]' tagSet="io"/>
+                <prop name="roleLevel" type="string" excelHeader='["基本信息", "角色/等级"]' tagSet="io"/>
                 <prop name="secretKey" type="string" hidden="true"/>
             </props>
         </po>

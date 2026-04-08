@@ -13,11 +13,14 @@
             <props xdef:body-type="list">
                 <prop name="!string" type="!string" comment="string" length="int"
                       excelHeader="string" excelWidth="int"
-                      hidden="boolean" mandatory="boolean"
-                      pattern="regex" min="double" max="double" precision="int" scale="int"
-                      minLength="int" maxLength="int"
+                      hidden="boolean"
+                      tagSet="string"
                       dict="string"
-                      xdef:name="PropInfo"/>
+                      xdef:name="PropInfo">
+                    <checks xdef:body-type="list">
+                        <xdef:unknown-tag xdef:name="CheckInfo" xdef:bean-tag-prop="tagName" message="string" xdef:unknown-attr="any" />
+                    </checks>
+                </prop>
             </props>
         </po>
     </pos>

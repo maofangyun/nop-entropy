@@ -36,25 +36,25 @@ public class PoExcelCodegenTest extends BaseTestCase {
         Object poConfig = ResourceComponentManager.instance().loadComponentModel("/seago/po/test-po-config.po.xml");
 
         // 2. 指定输出目录
-        // 直接定位到模块的 src/test/resources/_vfs 目录
+        // 修正：将输出目录上移，以抵消模板中多余的 src/main/resources/_vfs 层级
         File moduleDir = MavenDirHelper.projectDir(PoExcelCodegenTest.class);
         File vfsDir = new File(moduleDir, "src/test/resources/_vfs");
+        // 如果模板生成器会自动补全 src/main/resources/_vfs，我们指向其父目录
+        File targetDir = moduleDir.getCanonicalFile(); // 直接指向模块根目录
 
         // 3. 执行生成
         IEvalScope scope = XLang.newEvalScope();
         scope.setLocalValue("codeGenModel", poConfig);
-        // 这里 appName 设置为空字符串，配合模板结构 {appName}/src/main/resources/_vfs/excel
-        // 最终会生成到 vfsDir/src/main/resources/_vfs/excel 目录下
-        scope.setLocalValue("appName", "");
+        scope.setLocalValue("appName", "src/test/resources/_vfs");
 
         // 执行生成
-        XCodeGenerator generator = new XCodeGenerator("/seago/templates/excel", vfsDir.getCanonicalPath());
+        XCodeGenerator generator = new XCodeGenerator("/seago/templates/excel", targetDir.getCanonicalPath());
         generator.execute("/", null, scope);
 
         // 4. 验证生成的文件是否存在
-        // 模板路径是 {appName}/src/main/resources/_vfs/excel/
-        File baseImpFile = new File(vfsDir, "src/main/resources/_vfs/excel/_gen/_TestEntity.imp.xml");
-        File extImpFile = new File(vfsDir, "src/main/resources/_vfs/excel/TestEntity.imp.xml");
+        // 目标：src/test/resources/_vfs/excel/_gen/_TestEntity.imp.xml
+        File baseImpFile = new File(vfsDir, "excel/_gen/_TestEntity.imp.xml");
+        File extImpFile = new File(vfsDir, "excel/TestEntity.imp.xml");
 
         assertTrue(baseImpFile.exists(), "Base imp file should be generated: " + baseImpFile.getAbsolutePath());
         assertTrue(extImpFile.exists(), "Extension imp file should be generated: " + extImpFile.getAbsolutePath());

@@ -3,6 +3,9 @@
 <c:unit xpl:outputMode="node">
     <c:import from="/nop/excel/xlib/export-gen.xlib"/>
 
-    <export-gen:GenWorkbook po="${po}"
-                             data="${data}"/>
+    <c:script>
+        const exportPo = { ...po, props: po.props.filter(p => p.tagSet == null || (',' + p.tagSet + ',').contains(',io,')) };
+    </c:script>
+
+    <export-gen:GenWorkbook po="${exportPo}" data="${data}"/>
 </c:unit>

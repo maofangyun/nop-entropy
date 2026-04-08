@@ -6,7 +6,10 @@
          xmlns:import-gen="import-gen"
          defaultStripText="true">
         <sheets>
-             <import-gen:GenSheetConfig po="${po}" xpl:lib="/nop/excel/xlib/import-gen.xlib"/>
+            <c:script>
+                const importPo = { ...po, props: po.props.filter(p => p.tagSet == null || (',' + p.tagSet + ',').contains(',io,')) };
+            </c:script>
+             <import-gen:GenSheetConfig po="${importPo}" xpl:lib="/nop/excel/xlib/import-gen.xlib"/>
         </sheets>
     </imp>
 </c:unit>
